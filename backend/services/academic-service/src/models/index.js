@@ -12,5 +12,6 @@ const sequelize = new Sequelize(
 
 const Subject = require('./subject')(sequelize, DataTypes);
 const Attendance = require('./attendance')(sequelize, DataTypes);
+const Timetable = require('./timetable')(sequelize, DataTypes); // <-- add timetable
 
-module.exports = { sequelize, Subject, Attendance };
+module.exports = { sequelize, Subject, Attendance, Timetable };
