@@ -1,4 +1,4 @@
-// src/models/index.js
+
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -12,6 +12,8 @@ const sequelize = new Sequelize(
 
 const Subject = require('./subject')(sequelize, DataTypes);
 const Attendance = require('./attendance')(sequelize, DataTypes);
-const Timetable = require('./timetable')(sequelize, DataTypes); // <-- add timetable
+const Timetable = require('./timetable')(sequelize, DataTypes); 
+const Assessment = require('./assessment')(sequelize,DataTypes);
+const Grade = require('./grade')(sequelize, DataTypes);
 
-module.exports = { sequelize, Subject, Attendance, Timetable };
+module.exports = { sequelize, Subject, Attendance, Timetable, Assessment, Grade };
