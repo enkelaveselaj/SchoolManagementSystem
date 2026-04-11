@@ -1,12 +1,41 @@
-const mysql = require("mysql2/promise");
-require("dotenv").config();
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT
+const School = sequelize.define('School', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  name: {
+    type: DataTypes.STRING(255),
+    allowNull: false
+  },
+  address: {
+    type: DataTypes.STRING(255),
+    allowNull: false
+  },
+  founded: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1985
+  },
+  students: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1200
+  },
+  teachers: {
+    type: DataTypes.INTEGER,
+    defaultValue: 85
+  },
+  programs: {
+    type: DataTypes.INTEGER,
+    defaultValue: 25
+  }
+}, {
+  tableName: 'schools',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
-module.exports = pool;
+module.exports = School;

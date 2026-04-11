@@ -4,12 +4,18 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const schoolRoutes = require("./routes/school.routes");
+const academicYearRoutes = require("./routes/academicYear.routes");
+const classRoutes = require("./routes/class.routes");
+const sectionRoutes = require("./routes/section.routes");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
 app.use("/school", schoolRoutes);
+app.use("/academic-years", academicYearRoutes);
+app.use("/classes", classRoutes);
+app.use("/sections", sectionRoutes);
 
 app.get("/health", (req, res) => res.send("School service is running"));
 
