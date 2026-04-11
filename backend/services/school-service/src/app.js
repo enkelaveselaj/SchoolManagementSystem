@@ -3,6 +3,9 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 dotenv.config();
 
+// Initialize models and associations
+require('./models');
+
 const schoolRoutes = require("./routes/school.routes");
 const academicYearRoutes = require("./routes/academicYear.routes");
 const classRoutes = require("./routes/class.routes");

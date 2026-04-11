@@ -71,17 +71,6 @@ const updateSection = async (id, sectionData) => {
       throw new Error("Capacity must be at least 1");
     }
     
-    // Check for duplicates if name or class is being changed
-    if (name || classId) {
-      const existingSections = await sectionRepository.getSectionsByClass(classId || existingSection.class_id);
-      const duplicate = existingSections.find(sec => 
-        sec.id !== id && (name || existingSection.name) === sec.name
-      );
-      if (duplicate) {
-        throw new Error("Section with this name already exists in this class");
-      }
-    }
-    
     const success = await sectionRepository.updateSection(id, sectionData);
     if (!success) {
       throw new Error("Failed to update section");

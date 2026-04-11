@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react'
+import AcademicYearManagement from './components/AcademicYearManagement'
+import ClassManagement from './components/ClassManagement'
+import SectionManagement from './components/SectionManagement'
+import Dashboard from './components/Dashboard'
 import schoolService from './services/schoolService'
 import './styles.css'
 
@@ -17,9 +21,10 @@ const App = () => {
       setLoading(true)
       const data = await schoolService.getSchool()
       setSchoolData(data)
+      setError(null)
     } catch (err) {
       setError('Failed to load school information')
-      console.error(err)
+      console.error('Error fetching school data:', err)
     } finally {
       setLoading(false)
     }
@@ -49,6 +54,12 @@ const App = () => {
               {item}
             </button>
           ))}
+          <button
+            onClick={() => setPage('admin')}
+            className={`nav-item ${page === 'admin' ? 'active' : ''} admin-nav`}
+          >
+            Admin Panel
+          </button>
         </div>
       </div>
     </nav>
@@ -97,19 +108,19 @@ const App = () => {
           <div className="features-grid">
             {[
               {
-                icon: '🎓',
+                icon: 'graduation-cap',
                 title: 'Academic Excellence',
                 description: 'Rigorous curriculum with Advanced Placement and International Baccalaureate programs',
                 features: ['AP Courses', 'IB Program', 'STEM Focus']
               },
               {
-                icon: '🔬',
+                icon: 'flask',
                 title: 'Innovation Labs',
                 description: 'State-of-the-art facilities for hands-on learning and research',
                 features: ['Science Labs', 'Maker Space', 'Robotics']
               },
               {
-                icon: '🌍',
+                icon: 'globe',
                 title: 'Global Perspective',
                 description: 'Diverse community with international partnerships and exchange programs',
                 features: ['20+ Countries', 'Exchange Programs', 'Cultural Events']
@@ -354,6 +365,54 @@ const App = () => {
     </div>
   )
 
+  const AdminPanel = () => (
+    <div className="page">
+      <section className="page-header">
+        <div className="container">
+          <h1>Admin Panel</h1>
+          <p>School Management System - Administrative Dashboard</p>
+        </div>
+      </section>
+
+      <section className="content">
+        <div className="container">
+          <div className="admin-navigation">
+            <button 
+              onClick={() => setPage('admin-dashboard')}
+              className={`admin-nav-btn ${page === 'admin-dashboard' ? 'active' : ''}`}
+            >
+              Dashboard
+            </button>
+            <button 
+              onClick={() => setPage('admin-academic-years')}
+              className={`admin-nav-btn ${page === 'admin-academic-years' ? 'active' : ''}`}
+            >
+              Academic Years
+            </button>
+            <button 
+              onClick={() => setPage('admin-classes')}
+              className={`admin-nav-btn ${page === 'admin-classes' ? 'active' : ''}`}
+            >
+              Classes
+            </button>
+            <button 
+              onClick={() => setPage('admin-sections')}
+              className={`admin-nav-btn ${page === 'admin-sections' ? 'active' : ''}`}
+            >
+              Sections
+            </button>
+            <button 
+              onClick={() => setPage('home')}
+              className="admin-nav-btn back-btn"
+            >
+              Back to Website
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+
   if (loading) {
     return (
       <div className="loading">
@@ -380,6 +439,11 @@ const App = () => {
       {page === 'about' && <AboutPage />}
       {page === 'academics' && <AcademicsPage />}
       {page === 'contact' && <ContactPage />}
+      {page === 'admin' && <AdminPanel />}
+      {page === 'admin-dashboard' && <Dashboard />}
+      {page === 'admin-academic-years' && <AcademicYearManagement />}
+      {page === 'admin-classes' && <ClassManagement />}
+      {page === 'admin-sections' && <SectionManagement />}
     </div>
   )
 }

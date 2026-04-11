@@ -47,8 +47,8 @@ const createClass = async (classData) => {
     const { schoolId, academicYearId, gradeLevel, section, name, classTeacherId, capacity } = classData;
     
     // Validate required fields
-    if (!schoolId || !academicYearId || !gradeLevel || !section || !name) {
-      throw new Error("School ID, academic year ID, grade level, section, and name are required");
+    if (!academicYearId || !gradeLevel || !section || !name) {
+      throw new Error("Academic year ID, grade level, section, and name are required");
     }
     
     if (gradeLevel < 1 || gradeLevel > 12) {

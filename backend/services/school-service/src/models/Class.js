@@ -9,7 +9,7 @@ const Class = sequelize.define('Class', {
   },
   schoolId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     field: 'school_id'
   },
   academicYearId: {

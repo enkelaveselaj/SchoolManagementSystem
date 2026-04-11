@@ -7,16 +7,19 @@ const getAllAcademicYears = async () => {
 };
 
 const getAcademicYearById = async (id) => {
-  return await AcademicYear.findByPk(id);
+  console.log('Getting academic year by id:', id);
+  const result = await AcademicYear.findByPk(id);
+  console.log('Received academic year:', result);
+  return result;
 };
 
 const createAcademicYear = async (academicYear) => {
   const { name, startYear, endYear, isCurrent } = academicYear;
   return await AcademicYear.create({
     name,
-    start_year: startYear,
-    end_year: endYear,
-    is_current: isCurrent || false
+    startYear,
+    endYear,
+    isCurrent: isCurrent || false
   });
 };
 
@@ -24,9 +27,9 @@ const updateAcademicYear = async (id, academicYear) => {
   const { name, startYear, endYear, isCurrent } = academicYear;
   const [affectedRows] = await AcademicYear.update({
     name,
-    start_year: startYear,
-    end_year: endYear,
-    is_current: isCurrent
+    startYear,
+    endYear,
+    isCurrent
   }, {
     where: { id }
   });

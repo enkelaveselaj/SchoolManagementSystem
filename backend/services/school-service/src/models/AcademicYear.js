@@ -31,12 +31,7 @@ const AcademicYear = sequelize.define('AcademicYear', {
     field: 'end_year',
     validate: {
       min: 2000,
-      max: 2100,
-      isGreaterThanStartYear(value) {
-        if (value <= this.startYear) {
-          throw new Error('End year must be greater than start year');
-        }
-      }
+      max: 2100
     }
   },
   isCurrent: {

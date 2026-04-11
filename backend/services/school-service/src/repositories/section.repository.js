@@ -3,33 +3,17 @@ const Class = require('../models/Class.js');
 
 const getAllSections = async () => {
   return await Section.findAll({
-    include: [{
-      model: Class,
-      as: 'class',
-      attributes: ['id', 'name', 'grade_level']
-    }],
-    order: [['class.grade_level', 'ASC'], ['name', 'ASC']]
+    order: [['name', 'ASC']]
   });
 };
 
 const getSectionById = async (id) => {
-  return await Section.findByPk(id, {
-    include: [{
-      model: Class,
-      as: 'class',
-      attributes: ['id', 'name', 'grade_level']
-    }]
-  });
+  return await Section.findByPk(id);
 };
 
 const getSectionsByClass = async (classId) => {
   return await Section.findAll({
-    where: { class_id: classId },
-    include: [{
-      model: Class,
-      as: 'class',
-      attributes: ['id', 'name', 'grade_level']
-    }],
+    where: { classId: classId },
     order: [['name', 'ASC']]
   });
 };
@@ -37,21 +21,23 @@ const getSectionsByClass = async (classId) => {
 const createSection = async (sectionData) => {
   const { classId, name, capacity, roomNumber } = sectionData;
   return await Section.create({
-    class_id: classId,
-    name: name,
+    classId,
+    name,
     capacity: capacity || 30,
-    room_number: roomNumber
+    roomNumber
   });
 };
 
 const updateSection = async (id, sectionData) => {
   const { classId, name, capacity, roomNumber } = sectionData;
-  const [affectedRows] = await Section.update({
-    class_id: classId,
-    name: name,
-    capacity: capacity,
-    room_number: roomNumber
-  }, {
+  const updateData = {};
+  
+  if (classId !== undefined) updateData.classId = classId;
+  if (name !== undefined) updateData.name = name;
+  if (capacity !== undefined) updateData.capacity = capacity;
+  if (roomNumber !== undefined) updateData.roomNumber = roomNumber;
+  
+  const [affectedRows] = await Section.update(updateData, {
     where: { id }
   });
   return affectedRows > 0;
