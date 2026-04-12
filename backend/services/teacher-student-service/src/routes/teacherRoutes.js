@@ -1,13 +1,13 @@
-// src/routes/teacherAssignmentRoutes.js
+// src/routes/teacherRoutes.js
 import express from "express";
-import * as controller from "../controllers/teacherAssignmentController.js";
+import * as controller from "../controllers/teacherController.js";
 
 const router = express.Router();
 
-router.post("/", controller.createAssignment);
-router.get("/", controller.getAllAssignments);
-router.get("/:id", controller.getAssignmentById);
-router.put("/:id", controller.updateAssignment);
-router.delete("/:id", controller.deleteAssignment);
+router.post("/", controller.createTeacher);
+router.get("/", controller.getAllTeachers);
+router.get("/:id", controller.getTeacherById);
+router.put("/:id", controller.updateTeacher);
+router.delete("/:id", controller.deleteTeacher);
 
 export default router;

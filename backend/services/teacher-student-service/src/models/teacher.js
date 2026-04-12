@@ -6,13 +6,55 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
     },
 
+    firstName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    lastName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true, // Made optional since this service doesn't handle authentication
+      defaultValue: null,
     },
 
     phone: {
       type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    dateOfBirth: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    address: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    specialization: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    qualification: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    experience: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
 
@@ -21,9 +63,25 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
 
-    specialization: {
-      type: DataTypes.STRING,
+    salary: {
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: true,
+    },
+
+    employeeId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+
+    emergencyContact: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    emergencyPhone: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
 
     status: {

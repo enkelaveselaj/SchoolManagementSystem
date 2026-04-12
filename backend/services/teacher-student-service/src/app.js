@@ -4,7 +4,7 @@ import cors from "cors";
 import studentRoutes from "./routes/studentRoutes.js";
 import teacherRoutes from "./routes/teacherRoutes.js";
 import enrollmentRoutes from "./routes/enrollmentRoutes.js";
-import assignmentRoutes from "./routes/teacherAssignmentRoutes.js";
+// Removed assignmentRoutes since TeacherAssignment model was removed
 
 const app = express();
 
@@ -14,6 +14,6 @@ app.use(express.json());
 app.use("/students", studentRoutes);
 app.use("/teachers", teacherRoutes);
 app.use("/enrollments", enrollmentRoutes);
-app.use("/assignments", assignmentRoutes);
+// Removed assignments route
 
 export default app;
