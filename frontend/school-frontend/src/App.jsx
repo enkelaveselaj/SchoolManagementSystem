@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import AcademicYearManagement from './components/AcademicYearManagement'
 import ClassManagement from './components/ClassManagement'
 import SectionManagement from './components/SectionManagement'
+import StudentManagement from './components/StudentManagement'
+import TeacherManagement from './components/TeacherManagement'
 import Dashboard from './components/Dashboard'
 import schoolService from './services/schoolService'
 import './styles.css'
@@ -402,6 +404,18 @@ const App = () => {
               Sections
             </button>
             <button 
+              onClick={() => setPage('admin-students')}
+              className={`admin-nav-btn ${page === 'admin-students' ? 'active' : ''}`}
+            >
+              Students
+            </button>
+            <button 
+              onClick={() => setPage('admin-teachers')}
+              className={`admin-nav-btn ${page === 'admin-teachers' ? 'active' : ''}`}
+            >
+              Teachers
+            </button>
+            <button 
               onClick={() => setPage('home')}
               className="admin-nav-btn back-btn"
             >
@@ -444,6 +458,8 @@ const App = () => {
       {page === 'admin-academic-years' && <AcademicYearManagement />}
       {page === 'admin-classes' && <ClassManagement />}
       {page === 'admin-sections' && <SectionManagement />}
+      {page === 'admin-students' && <StudentManagement />}
+      {page === 'admin-teachers' && <TeacherManagement />}
     </div>
   )
 }

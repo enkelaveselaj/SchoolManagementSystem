@@ -4,15 +4,15 @@ import { DataTypes } from "sequelize";
 
 // Import model definitions
 import StudentModel from "./student.js";
-import TeacherModel from "./teacher.js";
+import TeacherModel from "./teacher.js"; // Fixed case sensitivity
 import EnrollmentModel from "./enrollment.js";
-import TeacherAssignmentModel from "./teacherAssignment.js";
+// Removed TeacherAssignmentModel to fix creation issues
 
 // Initialize models
 const Student = StudentModel(sequelize, DataTypes);
 const Teacher = TeacherModel(sequelize, DataTypes);
 const Enrollment = EnrollmentModel(sequelize, DataTypes);
-const TeacherAssignment = TeacherAssignmentModel(sequelize, DataTypes);
+// TeacherAssignment removed
 
 // Define associations
 
@@ -24,13 +24,8 @@ Enrollment.belongsTo(Student, {
   foreignKey: "studentId",
 });
 
-// Teacher → TeacherAssignment
-Teacher.hasMany(TeacherAssignment, {
-  foreignKey: "teacherId",
-});
-TeacherAssignment.belongsTo(Teacher, {
-  foreignKey: "teacherId",
-});
+// Teacher → TeacherAssignment (removed completely)
+// No TeacherAssignment associations
 
 // Export all models and sequelize instance as a default export
 const db = {
@@ -38,7 +33,7 @@ const db = {
   Student,
   Teacher,
   Enrollment,
-  TeacherAssignment,
+  // TeacherAssignment removed
 };
 
 export default db;

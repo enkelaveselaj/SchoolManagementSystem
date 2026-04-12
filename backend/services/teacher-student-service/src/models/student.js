@@ -6,9 +6,26 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
     },
 
+    firstName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    lastName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true, // Made optional since this service doesn't handle authentication
+      defaultValue: null, // Explicit default value
     },
 
     dateOfBirth: {
@@ -39,6 +56,31 @@ export default (sequelize, DataTypes) => {
     status: {
       type: DataTypes.STRING,
       defaultValue: "active",
+    },
+
+    classId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    sectionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    parentName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    parentPhone: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    parentEmail: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   });
 
