@@ -5,6 +5,8 @@ import SectionManagement from './components/SectionManagement'
 import StudentManagement from './components/StudentManagement'
 import TeacherManagement from './components/TeacherManagement'
 import Dashboard from './components/Dashboard'
+import Login from './components/Login'
+import Register from './components/Register'
 import schoolService from './services/schoolService'
 import './styles.css'
 
@@ -13,6 +15,16 @@ const App = () => {
   const [schoolData, setSchoolData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [auth, setAuth] = useState(() => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const userRaw = localStorage.getItem('auth_user')
+      const user = userRaw ? JSON.parse(userRaw) : null
+      return { token, user }
+    } catch {
+      return { token: null, user: null }
+    }
+  })
 
   useEffect(() => {
     fetchSchoolData()
@@ -56,6 +68,36 @@ const App = () => {
               {item}
             </button>
           ))}
+
+          {!auth?.token ? (
+            <>
+              <button
+                onClick={() => setPage('login')}
+                className={`nav-item ${page === 'login' ? 'active' : ''}`}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => setPage('register')}
+                className={`nav-item ${page === 'register' ? 'active' : ''}`}
+              >
+                Register
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => {
+                localStorage.removeItem('access_token')
+                localStorage.removeItem('auth_user')
+                setAuth({ token: null, user: null })
+                setPage('home')
+              }}
+              className="nav-item"
+            >
+              Logout
+            </button>
+          )}
+
           <button
             onClick={() => setPage('admin')}
             className={`nav-item ${page === 'admin' ? 'active' : ''} admin-nav`}
@@ -66,6 +108,23 @@ const App = () => {
       </div>
     </nav>
   )
+
+  const handleLoginSuccess = (result) => {
+    const token = result?.token
+    const user = result?.user
+    if (token) {
+      localStorage.setItem('access_token', token)
+    }
+    if (user) {
+      localStorage.setItem('auth_user', JSON.stringify(user))
+    }
+    setAuth({ token, user })
+    setPage('home')
+  }
+
+  const handleRegisterSuccess = () => {
+    setPage('login')
+  }
 
   const HomePage = () => (
     <div>
@@ -436,23 +495,32 @@ const App = () => {
     )
   }
 
-  if (error) {
-    return (
-      <div className="error">
-        <h2>Error</h2>
-        <p>{error}</p>
-        <button onClick={fetchSchoolData} className="btn-primary">Retry</button>
-      </div>
-    )
-  }
-
   return (
     <div className="app">
       <Navigation />
+      {error && (
+        <div className="error" style={{ margin: '16px auto', maxWidth: 1100 }}>
+          <h2>Error</h2>
+          <p>{error}</p>
+          <button onClick={fetchSchoolData} className="btn-primary">Retry</button>
+        </div>
+      )}
       {page === 'home' && <HomePage />}
       {page === 'about' && <AboutPage />}
       {page === 'academics' && <AcademicsPage />}
       {page === 'contact' && <ContactPage />}
+      {page === 'login' && (
+        <Login
+          onLoginSuccess={handleLoginSuccess}
+          onGoRegister={() => setPage('register')}
+        />
+      )}
+      {page === 'register' && (
+        <Register
+          onRegisterSuccess={handleRegisterSuccess}
+          onGoLogin={() => setPage('login')}
+        />
+      )}
       {page === 'admin' && <AdminPanel />}
       {page === 'admin-dashboard' && <Dashboard />}
       {page === 'admin-academic-years' && <AcademicYearManagement />}
