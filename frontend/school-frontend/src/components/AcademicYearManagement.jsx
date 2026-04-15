@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Edit2, Trash2, Search, Filter, Check, X, AlertCircle, Clock, TrendingUp } from 'lucide-react';
+import {
+  Calendar,
+  Plus,
+  Edit2,
+  Trash2,
+  Search,
+  Filter,
+  Check,
+  X,
+  AlertCircle,
+  Clock,
+  TrendingUp,
+  BookOpen,
+  Award
+} from 'lucide-react';
 import schoolService from '../services/schoolService';
+import './AcademicYear.css';
 
 const AcademicYearManagement = () => {
   const [academicYears, setAcademicYears] = useState([]);
@@ -8,12 +23,14 @@ const AcademicYearManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingYear, setEditingYear] = useState(null);
+
   const [formData, setFormData] = useState({
     name: '',
     startYear: '',
     endYear: '',
     isCurrent: false
   });
+
   const [errors, setErrors] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
@@ -36,41 +53,35 @@ const AcademicYearManagement = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
-    if (!formData.name || formData.name.trim() === '') {
+
+    if (!formData.name) {
       newErrors.name = 'Academic year name is required';
     }
-    
+
     if (!formData.startYear) {
       newErrors.startYear = 'Start year is required';
-    } else if (isNaN(formData.startYear) || formData.startYear < 2000 || formData.startYear > 2100) {
-      newErrors.startYear = 'Start year must be between 2000 and 2100';
     }
-    
+
     if (!formData.endYear) {
       newErrors.endYear = 'End year is required';
-    } else if (isNaN(formData.endYear) || formData.endYear < 2000 || formData.endYear > 2100) {
-      newErrors.endYear = 'End year must be between 2000 and 2100';
     }
-    
+
     if (formData.startYear && formData.endYear && parseInt(formData.endYear) <= parseInt(formData.startYear)) {
       newErrors.endYear = 'End year must be greater than start year';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+
+    if (!validateForm()) return;
 
     try {
       setSubmitting(true);
-      
+
       if (editingYear) {
         await schoolService.updateAcademicYear(editingYear.id, {
           ...formData,
@@ -84,13 +95,13 @@ const AcademicYearManagement = () => {
           endYear: parseInt(formData.endYear)
         });
       }
-      
+
       await loadAcademicYears();
       resetForm();
       setShowForm(false);
+
     } catch (error) {
-      console.error('Error saving academic year:', error);
-      alert('Failed to save academic year. Please try again.');
+      console.error(error);
     } finally {
       setSubmitting(false);
     }
@@ -100,10 +111,11 @@ const AcademicYearManagement = () => {
     setEditingYear(year);
     setFormData({
       name: year.name,
-      startYear: year.startYear.toString(),
-      endYear: year.endYear.toString(),
+      startYear: year.startYear,
+      endYear: year.endYear,
       isCurrent: year.isCurrent
     });
+
     setShowForm(true);
   };
 
@@ -113,19 +125,21 @@ const AcademicYearManagement = () => {
         await schoolService.deleteAcademicYear(year.id);
         await loadAcademicYears();
       } catch (error) {
-        console.error('Error deleting academic year:', error);
-        alert('Failed to delete academic year. Please try again.');
+        console.error(error);
       }
     }
   };
 
   const setCurrentYear = async (year) => {
     try {
-      await schoolService.updateAcademicYear(year.id, { ...year, isCurrent: true });
+      await schoolService.updateAcademicYear(year.id, {
+        ...year,
+        isCurrent: true
+      });
+
       await loadAcademicYears();
     } catch (error) {
-      console.error('Error setting current year:', error);
-      alert('Failed to set current academic year. Please try again.');
+      console.error(error);
     }
   };
 
@@ -136,306 +150,284 @@ const AcademicYearManagement = () => {
       endYear: '',
       isCurrent: false
     });
-    setErrors({});
+
     setEditingYear(null);
+    setErrors({});
   };
 
   const filteredYears = academicYears.filter(year => {
-    const matchesSearch = year.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         year.startYear.toString().includes(searchTerm) ||
-                         year.endYear.toString().includes(searchTerm);
-    
-    if (filter === 'current') {
-      return matchesSearch && year.isCurrent;
-    } else if (filter === 'past') {
-      return matchesSearch && !year.isCurrent;
-    }
-    
-    return matchesSearch;
+    const matchSearch =
+      year.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (filter === 'current') return matchSearch && year.isCurrent;
+    if (filter === 'past') return matchSearch && !year.isCurrent;
+
+    return matchSearch;
   });
 
   if (loading) {
     return (
-      <div className="page-loading">
-        <div className="loading-spinner"></div>
+      <div className="loading">
+        <div className="loading-spinner" />
         <p>Loading academic years...</p>
       </div>
     );
   }
 
   return (
-    <div className="academic-years-management">
-      {/* Header */}
-      <div className="page-header">
-        <div className="page-header__content">
-          <div className="page-header__title">
-            <Calendar className="page-header__icon" size={28} />
-            <h1>Academic Year Management</h1>
+    <div className="academic-year-management">
+
+      <div className="academic-header">
+        <div className="header-content">
+          <div className="header-left">
+            <div className="header-icon">
+              <Calendar size={32} />
+            </div>
+            <div className="header-text">
+              <h1>Academic Years</h1>
+              <p>Manage and organize school academic years and terms</p>
+            </div>
           </div>
-          <p className="page-header__description">
-            Manage academic years, terms, and school calendar periods
-          </p>
+          <div className="header-actions">
+            <button
+              className="btn-enhanced"
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+            >
+              <Plus size={18} />
+              Add Academic Year
+            </button>
+          </div>
         </div>
-        <button 
-          className="btn btn--primary btn--with-icon"
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-        >
-          <Plus size={20} />
-          Add Academic Year
-        </button>
       </div>
 
-      {/* Filters and Search */}
-      <div className="page-controls">
-        <div className="search-filter-group">
-          <div className="search-box">
-            <Search size={20} className="search-box__icon" />
+      <div className="controls-bar">
+        <div className="search-section">
+          <div className="search-input-wrapper">
+            <Search className="search-icon" size={18} />
             <input
-              type="text"
+              className="search-input"
               placeholder="Search academic years..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-box__input"
             />
           </div>
-          
-          <div className="filter-dropdown">
-            <Filter size={20} className="filter-dropdown__icon" />
-            <select 
-              value={filter} 
-              onChange={(e) => setFilter(e.target.value)}
-              className="filter-dropdown__select"
-            >
-              <option value="all">All Years</option>
-              <option value="current">Current Year</option>
-              <option value="past">Past Years</option>
-            </select>
-          </div>
         </div>
-        
-        <div className="stats-summary">
-          <span className="stats-summary__count">
-            {filteredYears.length} {filteredYears.length === 1 ? 'Year' : 'Years'}
-          </span>
-          {academicYears.some(year => year.isCurrent) && (
-            <span className="stats-summary__current">
-              <Check size={16} />
-              Current Year Active
-            </span>
-          )}
+        <div className="filter-section">
+          <button
+            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            <Filter size={16} />
+            All Years
+          </button>
+          <button
+            className={`filter-btn ${filter === 'current' ? 'active' : ''}`}
+            onClick={() => setFilter('current')}
+          >
+            <Clock size={16} />
+            Current
+          </button>
+          <button
+            className={`filter-btn ${filter === 'past' ? 'active' : ''}`}
+            onClick={() => setFilter('past')}
+          >
+            <BookOpen size={16} />
+            Past
+          </button>
         </div>
       </div>
 
-      {/* Academic Years List */}
-      <div className="academic-years-grid">
-        {filteredYears.length > 0 ? (
-          filteredYears.map((year) => (
-            <div key={year.id} className="year-card">
-              <div className="year-card__header">
-                <div className="year-card__title-section">
-                  <h3 className="year-card__title">{year.name}</h3>
-                  {year.isCurrent && (
-                    <span className="year-card__current-badge">
-                      <Clock size={14} />
-                      Current
-                    </span>
-                  )}
-                </div>
-                <div className="year-card__actions">
-                  <button 
-                    className="btn-icon btn-icon--edit"
-                    onClick={() => handleEdit(year)}
-                    title="Edit academic year"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                  <button 
-                    className="btn-icon btn-icon--delete"
-                    onClick={() => handleDelete(year)}
-                    title="Delete academic year"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+      <div className="content-section">
+        {filteredYears.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-content">
+              <div className="empty-icon">
+                <Calendar size={40} />
               </div>
-              
-              <div className="year-card__content">
-                <div className="year-card__period">
-                  <div className="period-item">
-                    <span className="period-item__label">Start Year</span>
-                    <span className="period-item__value">{year.startYear}</span>
-                  </div>
-                  <div className="period-item">
-                    <span className="period-item__label">End Year</span>
-                    <span className="period-item__value">{year.endYear}</span>
-                  </div>
-                </div>
-                
-                <div className="year-card__status">
-                  <div className="status-indicator">
-                    <span className={`status-dot ${year.isCurrent ? 'status-dot--active' : 'status-dot--inactive'}`}></span>
-                    <span className="status-text">
-                      {year.isCurrent ? 'Active Academic Year' : 'Archived'}
-                    </span>
-                  </div>
-                </div>
-                
-                {!year.isCurrent && (
-                  <button 
-                    className="btn btn--secondary btn--small"
-                    onClick={() => setCurrentYear(year)}
+              <div className="empty-text">
+                <h3>No Academic Years Found</h3>
+                <p>
+                  {searchTerm || filter !== 'all'
+                    ? 'Try adjusting your search or filter criteria'
+                    : 'Get started by adding your first academic year'}
+                </p>
+                {!searchTerm && filter === 'all' && (
+                  <button
+                    className="btn-enhanced"
+                    onClick={() => {
+                      resetForm();
+                      setShowForm(true);
+                    }}
                   >
-                    Set as Current
+                    <Plus size={18} />
+                    Add First Academic Year
                   </button>
                 )}
               </div>
             </div>
-          ))
+          </div>
         ) : (
-          <div className="empty-state">
-            <Calendar className="empty-state__icon" size={48} />
-            <h3 className="empty-state__title">No Academic Years Found</h3>
-            <p className="empty-state__description">
-              {searchTerm || filter !== 'all' 
-                ? 'No academic years match your search criteria.'
-                : 'Get started by creating your first academic year.'}
-            </p>
-            {!searchTerm && filter === 'all' && (
-              <button 
-                className="btn btn--primary"
-                onClick={() => {
-                  resetForm();
-                  setShowForm(true);
-                }}
-              >
-                <Plus size={20} />
-                Create First Academic Year
-              </button>
-            )}
+          <div className="academic-grid">
+            {filteredYears.map((year) => (
+              <div key={year.id} className="academic-card">
+                <div className="card-header">
+                  <div className="card-title">
+                    <h3>{year.name}</h3>
+                    {year.isCurrent && (
+                      <span className="category-badge">
+                        <Award size={12} />
+                        Current Year
+                      </span>
+                    )}
+                  </div>
+                  <div className="card-actions">
+                    <button className="btn-edit" onClick={() => handleEdit(year)}>
+                      <Edit2 size={16} />
+                    </button>
+                    <button className="btn-delete" onClick={() => handleDelete(year)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                <div className="card-content">
+                  <div className="year-info">
+                    <div className="year-range">
+                      <Calendar size={16} />
+                      <span>{year.startYear} - {year.endYear}</span>
+                    </div>
+                    <div className={`status ${year.isCurrent ? 'active' : ''}`}>
+                      <div className="dot" />
+                      {year.isCurrent ? 'Active' : 'Archived'}
+                    </div>
+                  </div>
+                  {!year.isCurrent && (
+                    <button
+                      className="btn-set btn-enhanced"
+                      onClick={() => setCurrentYear(year)}
+                    >
+                      <Check size={14} />
+                      Set as Current
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Add/Edit Modal */}
       {showForm && (
         <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal__header">
-              <h2 className="modal__title">
+          <div className="modal-enhanced">
+            <div className="modal-header">
+              <h2 className="modal-title">
                 {editingYear ? 'Edit Academic Year' : 'Add Academic Year'}
               </h2>
-              <button 
-                className="btn-icon btn-icon--close"
-                onClick={() => setShowForm(false)}
-              >
+              <button className="btn-close" onClick={() => setShowForm(false)}>
                 <X size={20} />
               </button>
             </div>
-            
-            <form onSubmit={handleSubmit} className="modal__form">
-              <div className="form-group">
-                <label className="form-group__label">
-                  Academic Year Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className={`form-group__input ${errors.name ? 'form-group__input--error' : ''}`}
-                  placeholder="e.g., 2025-2026"
-                />
-                {errors.name && (
-                  <span className="form-group__error">
-                    <AlertCircle size={14} />
-                    {errors.name}
-                  </span>
-                )}
-              </div>
-              
-              <div className="form-row">
+            <form onSubmit={handleSubmit} className="modal-form">
+              <div className="form-grid">
                 <div className="form-group">
-                  <label className="form-group__label">
-                    Start Year *
+                  <label>
+                    Academic Year Name <span className="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 2023-2024 Academic Year"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    className={errors.name ? 'form-input-error' : ''}
+                  />
+                  {errors.name && (
+                    <div className="error-message">
+                      <AlertCircle size={14} />
+                      {errors.name}
+                    </div>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label>
+                    Start Year <span className="required">*</span>
                   </label>
                   <input
                     type="number"
+                    placeholder="e.g., 2023"
                     value={formData.startYear}
-                    onChange={(e) => setFormData({...formData, startYear: e.target.value})}
-                    className={`form-group__input ${errors.startYear ? 'form-group__input--error' : ''}`}
-                    placeholder="e.g., 2025"
-                    min="2000"
-                    max="2100"
+                    onChange={(e) =>
+                      setFormData({ ...formData, startYear: e.target.value })
+                    }
+                    className={errors.startYear ? 'form-input-error' : ''}
                   />
                   {errors.startYear && (
-                    <span className="form-group__error">
+                    <div className="error-message">
                       <AlertCircle size={14} />
                       {errors.startYear}
-                    </span>
+                    </div>
                   )}
                 </div>
-                
                 <div className="form-group">
-                  <label className="form-group__label">
-                    End Year *
+                  <label>
+                    End Year <span className="required">*</span>
                   </label>
                   <input
                     type="number"
+                    placeholder="e.g., 2024"
                     value={formData.endYear}
-                    onChange={(e) => setFormData({...formData, endYear: e.target.value})}
-                    className={`form-group__input ${errors.endYear ? 'form-group__input--error' : ''}`}
-                    placeholder="e.g., 2026"
-                    min="2000"
-                    max="2100"
+                    onChange={(e) =>
+                      setFormData({ ...formData, endYear: e.target.value })
+                    }
+                    className={errors.endYear ? 'form-input-error' : ''}
                   />
                   {errors.endYear && (
-                    <span className="form-group__error">
+                    <div className="error-message">
                       <AlertCircle size={14} />
                       {errors.endYear}
-                    </span>
+                    </div>
                   )}
                 </div>
+                <div className="form-group">
+                  <div className="checkbox-group">
+                    <input
+                      type="checkbox"
+                      id="isCurrent"
+                      checked={formData.isCurrent}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          isCurrent: e.target.checked
+                        })
+                      }
+                    />
+                    <label htmlFor="isCurrent">
+                      Mark as Current Academic Year
+                    </label>
+                  </div>
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label className="checkbox-group">
-                  <input
-                    type="checkbox"
-                    checked={formData.isCurrent}
-                    onChange={(e) => setFormData({...formData, isCurrent: e.target.checked})}
-                    className="checkbox-group__input"
-                  />
-                  <span className="checkbox-group__label">
-                    Set as current academic year
-                  </span>
-                </label>
-              </div>
-              
-              <div className="modal__actions">
-                <button 
-                  type="button" 
-                  className="btn btn--secondary"
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn-cancel"
                   onClick={() => setShowForm(false)}
-                  disabled={submitting}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  className="btn btn--primary"
-                  disabled={submitting}
-                >
+                <button type="submit" className="btn-submit btn-large" disabled={submitting}>
                   {submitting ? (
                     <>
-                      <div className="btn-spinner"></div>
+                      <div className="loading-spinner" />
                       {editingYear ? 'Updating...' : 'Creating...'}
                     </>
                   ) : (
                     <>
-                      <Check size={16} />
-                      {editingYear ? 'Update Academic Year' : 'Create Academic Year'}
+                      {editingYear ? 'Update Year' : 'Create Year'}
                     </>
                   )}
                 </button>
@@ -444,6 +436,7 @@ const AcademicYearManagement = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

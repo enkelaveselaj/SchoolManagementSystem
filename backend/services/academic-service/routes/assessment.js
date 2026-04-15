@@ -5,6 +5,6 @@ const controller = require("../controllers/assessment");
 router.post("/", controller.create);
 router.get("/", controller.getAll);
 router.put("/:id", controller.update);
-router.delete("/:id", controller.delete);
+router.delete("/:id", controller.deleteAssessment);
 
 module.exports = router;

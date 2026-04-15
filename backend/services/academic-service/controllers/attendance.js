@@ -1,4 +1,3 @@
-
 const attendanceService = require('../services/attendance');
 
 class AttendanceController {
