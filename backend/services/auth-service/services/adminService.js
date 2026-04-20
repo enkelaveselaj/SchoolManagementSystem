@@ -1,5 +1,9 @@
-import db from "../db.js";
 import bcrypt from "bcrypt";
+
+import { findUserByEmail, createUser as createUserRow } from "../repositories/userRepository.js";
+import { findRoleIdByName } from "../repositories/roleRepository.js";
+import { assignRoleToUser, userHasRole } from "../repositories/userRoleRepository.js";
+import { linkParentToStudent as linkParentToStudentRow } from "../repositories/parentStudentRepository.js";
 
 export const createUser = async (data, currentUser) => {
   const { first_name, last_name, email, password, role } = data;
@@ -14,10 +18,7 @@ export const createUser = async (data, currentUser) => {
     }
   }
 
-  const [existing] = await db.query(
-    "SELECT * FROM users WHERE email = ?",
-    [email]
-  );
+  const existing = await findUserByEmail(email);
 
   if (existing.length > 0) {
     throw new Error("User already exists");
@@ -25,28 +26,20 @@ export const createUser = async (data, currentUser) => {
 
   const password_hash = await bcrypt.hash(password, 10);
 
-  const [result] = await db.query(
-    "INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)",
-    [first_name, last_name, email, password_hash]
-  );
+  const userId = await createUserRow({
+    first_name,
+    last_name,
+    email,
+    password_hash,
+  });
 
-  const userId = result.insertId;
+  const roleId = await findRoleIdByName(role);
 
-  const [roles] = await db.query(
-    "SELECT id FROM roles WHERE name = ?",
-    [role]
-  );
-
-  if (roles.length === 0) {
+  if (!roleId) {
     throw new Error("Invalid role");
   }
 
-  const roleId = roles[0].id;
-
-  await db.query(
-    "INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)",
-    [userId, roleId]
-  );
+  await assignRoleToUser({ userId, roleId });
 
   return {
     id: userId,
@@ -58,35 +51,18 @@ export const createUser = async (data, currentUser) => {
 };
 
 export const linkParentToStudent = async (parentId, studentId) => {
- 
-  const [parent] = await db.query(
-    `SELECT u.id FROM users u
-     JOIN user_roles ur ON u.id = ur.user_id
-     JOIN roles r ON ur.role_id = r.id
-     WHERE u.id = ? AND r.name = 'Parent'`,
-    [parentId]
-  );
 
-  if (parent.length === 0) {
+  const isParent = await userHasRole({ userId: parentId, roleName: "Parent" });
+  if (!isParent) {
     throw new Error("Invalid parent");
   }
 
-  const [student] = await db.query(
-    `SELECT u.id FROM users u
-     JOIN user_roles ur ON u.id = ur.user_id
-     JOIN roles r ON ur.role_id = r.id
-     WHERE u.id = ? AND r.name = 'Student'`,
-    [studentId]
-  );
-
-  if (student.length === 0) {
+  const isStudent = await userHasRole({ userId: studentId, roleName: "Student" });
+  if (!isStudent) {
     throw new Error("Invalid student");
   }
 
-  await db.query(
-    "INSERT INTO parent_students (parent_id, student_id) VALUES (?, ?)",
-    [parentId, studentId]
-  );
+  await linkParentToStudentRow({ parentId, studentId });
 
   return {
     message: "Parent linked to student successfully"

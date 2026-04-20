@@ -1,4 +1,3 @@
-
 const timetableService = require("../services/timetable");
 
 class TimetableController {

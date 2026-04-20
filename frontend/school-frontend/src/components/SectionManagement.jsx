@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Building, Plus, Edit2, Trash2, Search, Filter, Check, X, AlertCircle, Users, Calendar, BookOpen } from 'lucide-react';
+import { Building, Plus, Edit2, Trash2, Search, Filter, Check, X, AlertCircle, Users, Calendar, BookOpen, Award, TrendingUp } from 'lucide-react';
 import schoolService from '../services/schoolService';
+import './SectionManagement.css';
 
 const SectionManagement = () => {
   const [sections, setSections] = useState([]);
@@ -16,6 +17,7 @@ const SectionManagement = () => {
     roomNumber: ''
   });
   const [filterClass, setFilterClass] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -130,7 +132,10 @@ const SectionManagement = () => {
 
   const filteredSections = sections.filter(section => {
     const matchesClass = !filterClass || section.classId.toString() === filterClass;
-    return matchesClass;
+    const matchSearch = !searchTerm || 
+      section.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getClassName(section.classId).toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesClass && matchSearch;
   });
 
   const getClassName = (classId) => {
@@ -140,8 +145,8 @@ const SectionManagement = () => {
 
   if (loading) {
     return (
-      <div className="page-loading">
-        <div className="loading-spinner"></div>
+      <div className="loading">
+        <div className="loading-spinner" />
         <p>Loading sections...</p>
       </div>
     );
@@ -150,266 +155,269 @@ const SectionManagement = () => {
   return (
     <div className="section-management">
       {/* Header */}
-      <div className="page-header">
-        <div className="page-header__content">
-          <div className="page-header__title">
-            <Building className="page-header__icon" size={28} />
-            <h1>Section Management</h1>
+      <div className="academic-header">
+        <div className="header-content">
+          <div className="header-left">
+            <div className="header-icon">
+              <Building size={32} />
+            </div>
+            <div className="header-text">
+              <h1>Section Management</h1>
+              <p>Organize student sections within classes for better classroom management</p>
+            </div>
           </div>
-          <p className="page-header__description">
-            Organize student sections within classes for better classroom management
-          </p>
-        </div>
-        <button 
-          className="btn btn--primary btn--with-icon"
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-        >
-          <Plus size={20} />
-          Add Section
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="page-controls">
-        <div className="search-filter-group">
-          <div className="filter-dropdown">
-            <Filter className="filter-dropdown__icon" size={20} />
-            <select 
-              value={filterClass} 
-              onChange={(e) => setFilterClass(e.target.value)}
-              className="filter-dropdown__select"
+          <div className="header-actions">
+            <button
+              className="btn-enhanced"
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
             >
-              <option value="">All Classes</option>
-              {classes.map(cls => (
-                <option key={cls.id} value={cls.id}>
-                  {cls.name}
-                </option>
-              ))}
-            </select>
+              <Plus size={18} />
+              Add Section
+            </button>
           </div>
-        </div>
-        
-        <div className="stats-summary">
-          <span className="stats-summary__count">
-            {filteredSections.length} {filteredSections.length === 1 ? 'Section' : 'Sections'}
-          </span>
-          <span className="stats-summary__total">
-            Total: {sections.length} sections
-          </span>
         </div>
       </div>
 
-      {/* Sections Grid */}
-      <div className="sections-grid">
-        {filteredSections.length > 0 ? (
-          filteredSections.map((section) => (
-            <div key={section.id} className="section-card">
-              <div className="section-card__header">
-                <div className="section-card__title-section">
-                  <h3 className="section-card__title">{section.name}</h3>
-                  <div className="section-card__class-badge">
-                    <BookOpen size={14} />
-                    {getClassName(section.classId)}
-                  </div>
-                </div>
-                <div className="section-card__actions">
-                  <button 
-                    className="btn-icon btn-icon--edit"
-                    onClick={() => handleEdit(section)}
-                    title="Edit section"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                  <button 
-                    className="btn-icon btn-icon--delete"
-                    onClick={() => handleDelete(section)}
-                    title="Delete section"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+      {/* Controls */}
+      <div className="controls-bar">
+        <div className="search-section">
+          <div className="search-input-wrapper">
+            <Search className="search-icon" size={18} />
+            <input
+              className="search-input"
+              placeholder="Search sections..."
+              value={searchTerm || ''}
+              onChange={(e) => setSearchTerm && setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="filter-section">
+          <button
+            className={`filter-btn ${!filterClass ? 'active' : ''}`}
+            onClick={() => setFilterClass('')}
+          >
+            <BookOpen size={16} />
+            All Classes
+          </button>
+          {classes.map(cls => (
+            <button
+              key={cls.id}
+              className={`filter-btn ${filterClass === cls.id.toString() ? 'active' : ''}`}
+              onClick={() => setFilterClass(cls.id.toString())}
+            >
+              <Building size={16} />
+              {cls.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Cards */}
+      <div className="content-section">
+        {filteredSections.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-content">
+              <div className="empty-icon">
+                <Building size={40} />
               </div>
-              
-              <div className="section-card__content">
-                <div className="section-card__info">
-                  <div className="info-item">
-                    <span className="info-item__label">Class</span>
-                    <span className="info-item__value">
-                      {getClassName(section.classId)}
-                    </span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-item__label">Capacity</span>
-                    <span className="info-item__value">{section.capacity} students</span>
-                  </div>
-                  {section.roomNumber && (
-                    <div className="info-item">
-                      <span className="info-item__label">Room</span>
-                      <span className="info-item__value">{section.roomNumber}</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="section-card__stats">
-                  <div className="stat-item">
-                    <Users className="stat-item__icon" size={16} />
-                    <div className="stat-item__content">
-                      <span className="stat-item__value">--</span>
-                      <span className="stat-item__label">Enrolled</span>
-                    </div>
-                  </div>
-                  <div className="stat-item">
-                    <Calendar className="stat-item__icon" size={16} />
-                    <div className="stat-item__content">
-                      <span className="stat-item__value">--</span>
-                      <span className="stat-item__label">Available</span>
-                    </div>
-                  </div>
-                </div>
+              <div className="empty-text">
+                <h3>No Sections Found</h3>
+                <p>
+                  {filterClass
+                    ? 'No sections found for this class.'
+                    : 'Get started by creating your first section.'}
+                </p>
+                {!filterClass && (
+                  <button
+                    className="btn-enhanced"
+                    onClick={() => {
+                      resetForm();
+                      setShowForm(true);
+                    }}
+                  >
+                    <Plus size={18} />
+                    Create First Section
+                  </button>
+                )}
               </div>
             </div>
-          ))
+          </div>
         ) : (
-          <div className="empty-state">
-            <Building className="empty-state__icon" size={48} />
-            <h3 className="empty-state__title">No Sections Found</h3>
-            <p className="empty-state__description">
-              {filterClass 
-                ? 'No sections found for this class.'
-                : 'Get started by creating your first section.'}
-            </p>
-            {!filterClass && (
-              <button 
-                className="btn btn--primary"
-                onClick={() => {
-                  resetForm();
-                  setShowForm(true);
-                }}
-              >
-                <Plus size={20} />
-                Create First Section
-              </button>
-            )}
+          <div className="academic-grid">
+            {filteredSections.map((section) => (
+              <div key={section.id} className="academic-card">
+                <div className="card-header">
+                  <div className="card-title">
+                    <h3>{section.name}</h3>
+                    <div className="card-meta">
+                      <span className="category-badge">
+                        <BookOpen size={12} />
+                        {getClassName(section.classId)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="card-actions">
+                    <button className="btn-edit" onClick={() => handleEdit(section)}>
+                      <Edit2 size={16} />
+                    </button>
+                    <button className="btn-delete" onClick={() => handleDelete(section)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                <div className="card-content">
+                  <div className="year-info">
+                    <div className="year-range">
+                      <Building size={16} />
+                      <span>{getClassName(section.classId)}</span>
+                    </div>
+                    <div className="status active">
+                      <div className="dot" />
+                      {section.capacity} Students
+                    </div>
+                  </div>
+                  {section.roomNumber && (
+                    <div className="room-info">
+                      <Calendar size={16} />
+                      <span>Room {section.roomNumber}</span>
+                    </div>
+                  )}
+                  <div className="class-stats">
+                    <div className="stat-item">
+                      <Users className="stat-icon" size={16} />
+                      <div className="stat-content">
+                        <span className="stat-number">--</span>
+                        <span className="stat-label">Enrolled</span>
+                      </div>
+                    </div>
+                    <div className="stat-item">
+                      <TrendingUp className="stat-icon" size={16} />
+                      <div className="stat-content">
+                        <span className="stat-number">{section.capacity}</span>
+                        <span className="stat-label">Capacity</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Modal */}
       {showForm && (
         <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal__header">
-              <h2 className="modal__title">
+          <div className="modal-enhanced">
+            <div className="modal-header">
+              <h2 className="modal-title">
                 {editingSection ? 'Edit Section' : 'Add New Section'}
               </h2>
-              <button 
-                className="btn-icon btn-icon--close"
-                onClick={() => setShowForm(false)}
-              >
+              <button className="btn-close" onClick={() => setShowForm(false)}>
                 <X size={20} />
               </button>
             </div>
-            
-            <form onSubmit={handleSubmit} className="modal__form">
-              <div className="form-group">
-                <label className="form-group__label">
-                  Class *
-                </label>
-                <select
-                  value={formData.classId}
-                  onChange={(e) => setFormData({...formData, classId: e.target.value})}
-                  className={`form-group__input ${errors.classId ? 'form-group__input--error' : ''}`}
-                >
-                  <option value="">Select class</option>
-                  {classes.map(cls => (
-                    <option key={cls.id} value={cls.id}>
-                      {cls.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.classId && (
-                  <span className="form-group__error">
-                    <AlertCircle size={14} />
-                    {errors.classId}
-                  </span>
-                )}
-              </div>
-              
-              <div className="form-group">
-                <label className="form-group__label">
-                  Section Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className={`form-group__input ${errors.name ? 'form-group__input--error' : ''}`}
-                  placeholder="e.g., Section A, Morning Group"
-                />
-                {errors.name && (
-                  <span className="form-group__error">
-                    <AlertCircle size={14} />
-                    {errors.name}
-                  </span>
-                )}
-              </div>
-              
-              <div className="form-row">
+            <form onSubmit={handleSubmit} className="modal-form">
+              <div className="form-grid">
                 <div className="form-group">
-                  <label className="form-group__label">
-                    Capacity *
+                  <label>
+                    Class <span className="required">*</span>
                   </label>
-                  <input
-                    type="number"
-                    value={formData.capacity}
-                    onChange={(e) => setFormData({...formData, capacity: e.target.value})}
-                    className={`form-group__input ${errors.capacity ? 'form-group__input--error' : ''}`}
-                    placeholder="Maximum number of students"
-                    min="1"
-                    max="100"
-                  />
-                  {errors.capacity && (
-                    <span className="form-group__error">
+                  <select
+                    value={formData.classId}
+                    onChange={(e) => setFormData({...formData, classId: e.target.value})}
+                    className={`form-select ${errors.classId ? 'form-input-error' : ''}`}
+                  >
+                    <option value="">Select class</option>
+                    {classes.map(cls => (
+                      <option key={cls.id} value={cls.id}>
+                        {cls.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.classId && (
+                    <div className="error-message">
                       <AlertCircle size={14} />
-                      {errors.capacity}
-                    </span>
+                      {errors.classId}
+                    </div>
                   )}
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-group__label">
-                    Room Number
+                  <label>
+                    Section Name <span className="required">*</span>
                   </label>
                   <input
                     type="text"
-                    value={formData.roomNumber}
-                    onChange={(e) => setFormData({...formData, roomNumber: e.target.value})}
-                    className="form-group__input"
-                    placeholder="e.g., Room 101"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className={errors.name ? 'form-input-error' : ''}
+                    placeholder="e.g., Section A, Morning Group"
                   />
+                  {errors.name && (
+                    <div className="error-message">
+                      <AlertCircle size={14} />
+                      {errors.name}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>
+                      Capacity <span className="required">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.capacity}
+                      onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                      className={errors.capacity ? 'form-input-error' : ''}
+                      placeholder="Maximum number of students"
+                      min="1"
+                      max="100"
+                    />
+                    {errors.capacity && (
+                      <div className="error-message">
+                        <AlertCircle size={14} />
+                        {errors.capacity}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>
+                      Room Number
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.roomNumber}
+                      onChange={(e) => setFormData({...formData, roomNumber: e.target.value})}
+                      className="form-select"
+                      placeholder="e.g., Room 101"
+                    />
+                  </div>
                 </div>
               </div>
-              
-              <div className="modal__actions">
-                <button 
-                  type="button" 
-                  className="btn btn--secondary"
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn-cancel"
                   onClick={() => setShowForm(false)}
                   disabled={submitting}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  className="btn btn--primary"
+                <button
+                  type="submit"
+                  className="btn-submit btn-large"
                   disabled={submitting}
                 >
                   {submitting ? (
                     <>
-                      <div className="btn-spinner"></div>
+                      <div className="loading-spinner" />
                       {editingSection ? 'Updating...' : 'Creating...'}
                     </>
                   ) : (

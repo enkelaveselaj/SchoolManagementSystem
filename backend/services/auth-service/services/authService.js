@@ -1,16 +1,19 @@
-import db from "../db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+
+import {
+  findUserByEmail,
+  createUser as createUserRow,
+} from "../repositories/userRepository.js";
+import { findRoleIdByName, findRoleNamesByUserId } from "../repositories/roleRepository.js";
+import { assignRoleToUser } from "../repositories/userRoleRepository.js";
 
 export const registerUser = async (data) => {
   const { first_name, last_name, email, password } = data;
 
   const roleName = "Student";
 
-  const [existing] = await db.query(
-    "SELECT * FROM users WHERE email = ?",
-    [email]
-  );
+  const existing = await findUserByEmail(email);
 
   if (existing.length > 0) {
     throw new Error("User already exists");
@@ -18,28 +21,20 @@ export const registerUser = async (data) => {
 
   const password_hash = await bcrypt.hash(password, 10);
 
-  const [result] = await db.query(
-    "INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)",
-    [first_name, last_name, email, password_hash]
-  );
+  const userId = await createUserRow({
+    first_name,
+    last_name,
+    email,
+    password_hash,
+  });
 
-  const userId = result.insertId;
+  const roleId = await findRoleIdByName(roleName);
 
-  const [roles] = await db.query(
-    "SELECT id FROM roles WHERE name = ?",
-    [roleName]
-  );
-
-  if (roles.length === 0) {
+  if (!roleId) {
     throw new Error("Role not found");
   }
 
-  const roleId = roles[0].id;
-
-  await db.query(
-    "INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)",
-    [userId, roleId]
-  );
+  await assignRoleToUser({ userId, roleId });
 
   return {
     id: userId,
@@ -54,10 +49,7 @@ export const registerUser = async (data) => {
 export const loginUser = async (data) => {
   const { email, password } = data;
 
-  const [users] = await db.query(
-    "SELECT * FROM users WHERE email = ?",
-    [email]
-  );
+  const users = await findUserByEmail(email);
 
   if (users.length === 0) {
     throw new Error("User not found");
@@ -71,14 +63,8 @@ export const loginUser = async (data) => {
     throw new Error("Invalid password");
   }
 
-  const [roles] = await db.query(
-    `SELECT r.name FROM roles r
-     JOIN user_roles ur ON r.id = ur.role_id
-     WHERE ur.user_id = ?`,
-    [user.id]
-  );
-
-  const role = roles[0]?.name;
+  const roleNames = await findRoleNamesByUserId(user.id);
+  const role = roleNames[0];
 
   const token = jwt.sign(
     {

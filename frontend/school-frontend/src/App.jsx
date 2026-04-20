@@ -5,7 +5,10 @@ import SectionManagement from './components/SectionManagement'
 import StudentManagement from './components/StudentManagement'
 import TeacherManagement from './components/TeacherManagement'
 import Dashboard from './components/Dashboard'
+import Login from './components/Login'
+import Register from './components/Register'
 import schoolService from './services/schoolService'
+import FAQManagement from './components/FAQManagement'
 import './styles.css'
 
 const App = () => {
@@ -13,6 +16,16 @@ const App = () => {
   const [schoolData, setSchoolData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [auth, setAuth] = useState(() => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const userRaw = localStorage.getItem('auth_user')
+      const user = userRaw ? JSON.parse(userRaw) : null
+      return { token, user }
+    } catch {
+      return { token: null, user: null }
+    }
+  })
 
   useEffect(() => {
     fetchSchoolData()
@@ -37,65 +50,205 @@ const App = () => {
       <div className="nav-container">
         <div className="nav-brand">
           <div className="nav-logo">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <path d="M16 2L4 8V16L16 22L28 16V8L16 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M16 22V30" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4 8L16 14L28 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <rect width="40" height="40" rx="12" fill="url(#logo-gradient)"/>
+              <path d="M20 8L10 14V20L20 26L30 20V14L20 8Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M20 26V32" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 14L20 18L30 14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <defs>
+                <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#2563eb"/>
+                  <stop offset="100%" stopColor="#1e40af"/>
+                </linearGradient>
+              </defs>
             </svg>
           </div>
-          <span className="nav-title">Blue Ridge Academy</span>
+          <div className="brand-content">
+            <span className="nav-title">Blue Ridge Academy</span>
+            <span className="nav-tagline">Excellence in Education</span>
+          </div>
         </div>
         
         <div className="nav-menu">
-          {['Home', 'About', 'Academics', 'Contact'].map((item) => (
+          <div className="nav-links">
+            {['Home', 'About', 'Academics', 'FAQ', 'Contact'].map((item) => (
+              <button
+                key={item}
+                onClick={() => setPage(item.toLowerCase())}
+                className={`nav-link ${page === item.toLowerCase() ? 'active' : ''}`}
+              >
+                <span className="nav-text">{item}</span>
+                <span className="nav-indicator"></span>
+              </button>
+            ))}
+          </div>
+
+          <div className="nav-actions">
+            {!auth?.token ? (
+              <>
+                <button
+                  onClick={() => setPage('login')}
+                  className={`nav-btn nav-btn-outline ${page === 'login' ? 'active' : ''}`}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Login</span>
+                </button>
+                <button
+                  onClick={() => setPage('register')}
+                  className={`nav-btn nav-btn-primary ${page === 'register' ? 'active' : ''}`}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 11v6M19 8v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Register</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="user-menu">
+                  <div className="user-avatar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <span className="user-name">{auth?.user?.name || 'User'}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('access_token')
+                    localStorage.removeItem('auth_user')
+                    setAuth({ token: null, user: null })
+                    setPage('home')
+                  }}
+                  className="nav-btn nav-btn-ghost"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </>
+            )}
+
             <button
-              key={item}
-              onClick={() => setPage(item.toLowerCase())}
-              className={`nav-item ${page === item.toLowerCase() ? 'active' : ''}`}
+              onClick={() => setPage('admin')}
+              className={`nav-btn nav-btn-admin ${page === 'admin' ? 'active' : ''}`}
             >
-              {item}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span>Admin</span>
             </button>
-          ))}
-          <button
-            onClick={() => setPage('admin')}
-            className={`nav-item ${page === 'admin' ? 'active' : ''} admin-nav`}
-          >
-            Admin Panel
-          </button>
+          </div>
         </div>
+
+        <button className="mobile-menu-toggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
     </nav>
   )
 
+  const handleLoginSuccess = (result) => {
+    const token = result?.token
+    const user = result?.user
+    if (token) {
+      localStorage.setItem('access_token', token)
+    }
+    if (user) {
+      localStorage.setItem('auth_user', JSON.stringify(user))
+    }
+    setAuth({ token, user })
+    setPage('home')
+  }
+
+  const handleRegisterSuccess = () => {
+    setPage('login')
+  }
+
   const HomePage = () => (
     <div>
       <section className="hero">
+        <div className="hero-background">
+          <div className="hero-pattern"></div>
+          <div className="hero-gradient"></div>
+        </div>
         <div className="hero-content">
+          <div className="hero-badge">
+            <span className="badge-icon"> excellence</span>
+            <span className="badge-text">Ranked #1 in Academic Excellence</span>
+          </div>
           <h1 className="hero-title">
             Excellence in Education
             <span className="hero-subtitle">Since {schoolData?.founded || '1985'}</span>
           </h1>
           <p className="hero-description">
             Nurturing tomorrow's leaders through innovative teaching, cutting-edge technology, 
-            and a commitment to academic excellence.
+            and a commitment to academic excellence that prepares students for global success.
           </p>
           <div className="hero-stats">
             <div className="stat-item">
-              <div className="stat-number">{schoolData?.students || '1,200'}</div>
-              <div className="stat-label">Students</div>
+              <div className="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{schoolData?.students || '1,200'}</div>
+                <div className="stat-label">Students</div>
+              </div>
             </div>
             <div className="stat-item">
-              <div className="stat-number">{schoolData?.teachers || '85'}</div>
-              <div className="stat-label">Faculty</div>
+              <div className="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{schoolData?.teachers || '85'}</div>
+                <div className="stat-label">Faculty</div>
+              </div>
             </div>
             <div className="stat-item">
-              <div className="stat-number">{schoolData?.programs || '25'}</div>
-              <div className="stat-label">Programs</div>
+              <div className="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{schoolData?.programs || '25'}</div>
+                <div className="stat-label">Programs</div>
+              </div>
             </div>
           </div>
           <div className="hero-actions">
-            <button className="btn-primary">Apply Now</button>
-            <button className="btn-secondary">Virtual Tour</button>
+            <button className="btn-primary btn-large">
+              <span>Apply Now</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14m-7-7l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button className="btn-secondary btn-large">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span>Virtual Tour</span>
+            </button>
+          </div>
+        </div>
+        <div className="hero-image">
+          <div className="hero-image-placeholder">
+            <svg width="400" height="300" viewBox="0 0 400 300" fill="none">
+              <rect width="400" height="300" fill="rgba(37, 99, 235, 0.1)"/>
+              <path d="M100 150L150 100L200 120L250 80L300 110L350 90L400 120V300H0V150L50 120L100 150Z" fill="rgba(37, 99, 235, 0.2)"/>
+              <path d="M0 200L50 180L100 200L150 160L200 180L250 140L300 170L350 150L400 180V300H0V200Z" fill="rgba(37, 99, 235, 0.3)"/>
+            </svg>
           </div>
         </div>
       </section>
@@ -436,23 +589,33 @@ const App = () => {
     )
   }
 
-  if (error) {
-    return (
-      <div className="error">
-        <h2>Error</h2>
-        <p>{error}</p>
-        <button onClick={fetchSchoolData} className="btn-primary">Retry</button>
-      </div>
-    )
-  }
-
   return (
     <div className="app">
       <Navigation />
+      {error && (
+        <div className="error" style={{ margin: '16px auto', maxWidth: 1100 }}>
+          <h2>Error</h2>
+          <p>{error}</p>
+          <button onClick={fetchSchoolData} className="btn-primary">Retry</button>
+        </div>
+      )}
       {page === 'home' && <HomePage />}
       {page === 'about' && <AboutPage />}
       {page === 'academics' && <AcademicsPage />}
+      {page === 'faq' && <FAQManagement />}
       {page === 'contact' && <ContactPage />}
+      {page === 'login' && (
+        <Login
+          onLoginSuccess={handleLoginSuccess}
+          onGoRegister={() => setPage('register')}
+        />
+      )}
+      {page === 'register' && (
+        <Register
+          onRegisterSuccess={handleRegisterSuccess}
+          onGoLogin={() => setPage('login')}
+        />
+      )}
       {page === 'admin' && <AdminPanel />}
       {page === 'admin-dashboard' && <Dashboard />}
       {page === 'admin-academic-years' && <AcademicYearManagement />}

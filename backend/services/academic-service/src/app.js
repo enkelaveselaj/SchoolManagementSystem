@@ -10,7 +10,6 @@ const timetableRoutes = require("../routes/timetable");
 const assessmentRoutes = require("../routes/assessment");
 const gradeRoutes = require("../routes/grade");
 
-
 const app = express();
 
 app.use(cors());

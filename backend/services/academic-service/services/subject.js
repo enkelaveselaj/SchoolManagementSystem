@@ -1,4 +1,3 @@
-
 const subjectRepository = require('../repositories/subject');
 
 class SubjectService {
