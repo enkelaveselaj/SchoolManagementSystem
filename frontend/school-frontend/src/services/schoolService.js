@@ -217,6 +217,66 @@ const schoolService = {
       console.error('Error fetching sections by class:', error)
       throw error
     }
+  },
+
+  // Student functions
+  getAllStudents: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/students`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching students:', error)
+      throw error
+    }
+  },
+
+  getStudentById: async (id) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/students/${id}`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching student:', error)
+      throw error
+    }
+  },
+
+  createStudent: async (studentData) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/students`, studentData)
+      return response.data
+    } catch (error) {
+      console.error('Error creating student:', error)
+      throw error
+    }
+  },
+
+  updateStudent: async (id, studentData) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/students/${id}`, studentData)
+      return response.data
+    } catch (error) {
+      console.error('Error updating student:', error)
+      throw error
+    }
+  },
+
+  deleteStudent: async (id) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/students/${id}`)
+    } catch (error) {
+      console.error('Error deleting student:', error)
+      throw error
+    }
+  },
+
+  getStudentsByClass: async (classId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/students?classId=${classId}`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching students by class:', error)
+      throw error
+    }
   }
 }
 

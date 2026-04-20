@@ -19,14 +19,11 @@ exports.update = async (req, res) => {
 };
 
 exports.delete = async (req, res) => {
-  const { studentId, subjectId, teacherId } = req.body;
-
-  const result = await assessmentService.deleteAssessment(
-    req.params.id,
-    studentId,
-    subjectId,
-    teacherId
-  );
-
-  res.json(result);
+  try {
+    const result = await assessmentService.deleteAssessment(req.params.id);
+    res.json(result);
+  } catch (error) {
+    console.error('Error deleting assessment:', error);
+    res.status(500).json({ error: 'Failed to delete assessment' });
+  }
 };

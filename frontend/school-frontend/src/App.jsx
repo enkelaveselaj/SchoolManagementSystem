@@ -9,10 +9,19 @@ import Login from './components/Login'
 import Register from './components/Register'
 import schoolService from './services/schoolService'
 import FAQManagement from './components/FAQManagement'
+import AssessmentManagement from './components/teacher/AssessmentManagement'
+import GradeManagement from './components/teacher/GradeManagement'
+import TeacherPanel from './components/teacher/TeacherPanel'
 import './styles.css'
 
 const App = () => {
-  const [page, setPage] = useState('home')
+  const [page, setPage] = useState(() => {
+    // Check for teacher panel in URL hash
+    if (window.location.hash === '#teacher-panel') {
+      return 'teacher-panel';
+    }
+    return 'home';
+  })
   const [schoolData, setSchoolData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -137,10 +146,21 @@ const App = () => {
               className={`nav-btn nav-btn-admin ${page === 'admin' ? 'active' : ''}`}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l10-5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               <span>Admin</span>
             </button>
+            {auth?.token && (
+              <button
+                onClick={() => setPage('teacher-panel')}
+                className={`nav-btn nav-btn-teacher ${page === 'teacher-panel' ? 'active' : ''}`}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 19 7.5 19s3.332-.523 4.5-1.247M6.764 6.24l-6.795 6.795m0 0l6.795 6.795" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>Teacher</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -568,7 +588,7 @@ const App = () => {
             >
               Teachers
             </button>
-            <button 
+                        <button 
               onClick={() => setPage('home')}
               className="admin-nav-btn back-btn"
             >
@@ -623,6 +643,7 @@ const App = () => {
       {page === 'admin-sections' && <SectionManagement />}
       {page === 'admin-students' && <StudentManagement />}
       {page === 'admin-teachers' && <TeacherManagement />}
+      {page === 'teacher-panel' && <TeacherPanel />}
     </div>
   )
 }

@@ -32,16 +32,8 @@ class AssessmentService {
     return { message: "Assessment updated" };
   }
 
-  async deleteAssessment(id, studentId, subjectId, teacherId) {
+  async deleteAssessment(id) {
     await assessmentRepo.delete(id);
-
-    // 🔥 AUTO RECALCULATE AFTER DELETE
-    await gradeService.calculateFinalGrade(
-      studentId,
-      subjectId,
-      teacherId
-    );
-
     return { message: "Assessment deleted" };
   }
 }

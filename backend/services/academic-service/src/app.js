@@ -18,8 +18,8 @@ app.use(express.json());
 app.use("/subjects", subjectRoutes);
 app.use("/attendance", attendanceRoutes);
 app.use("/timetable", timetableRoutes);
-app.use("/assessment", assessmentRoutes );
-app.use("/grade", gradeRoutes);
+app.use("/assessments", assessmentRoutes );
+app.use("/grades", gradeRoutes);
 
 sequelize.sync().then(() => {
   app.listen(process.env.PORT, () => {
