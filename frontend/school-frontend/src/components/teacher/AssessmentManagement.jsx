@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, Filter, Check, X, AlertCircle, Calendar, BookOpen, Users, TrendingUp, Award, FileText, Target, Clock } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, Check, X, AlertCircle, BookOpen, Users, Clock, Calendar, Award, Target, UserCheck, FileText, Save, User } from 'lucide-react';
 import academicService from '../../services/academicService';
 import schoolService from '../../services/schoolService';
+import { studentAPI } from '../../services/teacherStudentService';
 
 const AssessmentManagement = () => {
   // Mock teacher ID - in real app this would come from auth context
@@ -40,32 +41,30 @@ const AssessmentManagement = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [assessmentsData, teacherSubjectsData, classesData, studentsData] = await Promise.all([
+      const [assessmentsData, subjectsData, classesData, studentsData] = await Promise.all([
         academicService.getAllAssessments().catch(err => {
           console.error('Error fetching assessments:', err);
           return [];
         }),
-        academicService.getTeacherSubjects(teacherId).catch(err => {
-          console.error('Error fetching teacher subjects:', err);
+        academicService.getAllSubjects().catch(err => {
+          console.error('Error fetching subjects:', err);
           return [];
         }),
         schoolService.getAllClasses().catch(err => {
           console.error('Error fetching classes:', err);
           return [];
         }),
-        schoolService.getAllStudents().catch(err => {
+        studentAPI.getAllStudents().catch(err => {
           console.error('Error fetching students:', err);
           return [];
         })
       ]);
       
-      // Filter assessments to only show those for teacher's subjects
-      const teacherAssessments = assessmentsData.filter(assessment => 
-        teacherSubjectsData.some(subject => subject.id === assessment.subjectId)
-      );
+      console.log('All subjects loaded:', subjectsData);
+      console.log('All assessments loaded:', assessmentsData);
       
-      setAssessments(teacherAssessments);
-      setSubjects(teacherSubjectsData);
+      setAssessments(assessmentsData);
+      setSubjects(subjectsData);
       setClasses(classesData);
       setStudents(studentsData);
       setErrors({});
@@ -84,7 +83,6 @@ const AssessmentManagement = () => {
     try {
       const assessmentData = {
         ...formData,
-        score: parseInt(formData.score),
         maxScore: parseInt(formData.maxScore),
         weight: parseFloat(formData.weight)
       };
@@ -101,13 +99,11 @@ const AssessmentManagement = () => {
       setFormData({
         title: '',
         type: 'Quiz',
-        score: 0,
-        maxScore: 100,
         weight: 10,
         date: new Date().toISOString().split('T')[0],
-        studentId: '',
         subjectId: '',
-        teacherId: ''
+        classId: '',
+        teacherId: teacherId
       });
     } catch (error) {
       console.error('Error saving assessment:', error);
@@ -122,13 +118,12 @@ const AssessmentManagement = () => {
     setFormData({
       title: assessment.title || '',
       type: assessment.type || 'Quiz',
-      score: assessment.score || 0,
       maxScore: assessment.maxScore || 100,
       weight: assessment.weight || 10,
       date: assessment.date ? new Date(assessment.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      studentId: assessment.studentId || '',
       subjectId: assessment.subjectId || '',
-      teacherId: assessment.teacherId || ''
+      classId: assessment.classId || '',
+      teacherId: assessment.teacherId || teacherId
     });
     setShowForm(true);
   };
@@ -1026,35 +1021,7 @@ const AssessmentManagement = () => {
                   />
                 </div>
 
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#4a5568',
-                    marginBottom: '8px'
-                  }}>
-                    Score
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.score}
-                    onChange={(e) => setFormData({...formData, score: e.target.value})}
-                    min="0"
-                    max={formData.maxScore}
-                    style={{
-                      width: '100%',
-                      padding: '14px 16px',
-                      border: errors.score ? '2px solid #ef4444' : '1px solid rgba(102, 126, 234, 0.3)',
-                      borderRadius: '12px',
-                      fontSize: '15px',
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      fontWeight: '500',
-                      color: '#1a202c'
-                    }}
-                  />
-                </div>
-
+                
                 <div>
                   <label style={{
                     display: 'block',
@@ -1113,39 +1080,7 @@ const AssessmentManagement = () => {
                   />
                 </div>
 
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#4a5568',
-                    marginBottom: '8px'
-                  }}>
-                    Student
-                  </label>
-                  <select
-                    value={formData.studentId}
-                    onChange={(e) => setFormData({...formData, studentId: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '14px 16px',
-                      border: errors.studentId ? '2px solid #ef4444' : '1px solid rgba(102, 126, 234, 0.3)',
-                      borderRadius: '12px',
-                      fontSize: '15px',
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      fontWeight: '500',
-                      color: '#1a202c'
-                    }}
-                  >
-                    <option value="">Select Student</option>
-                    {students.map(student => (
-                      <option key={student.id} value={student.id}>
-                        {student.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
+                
                 <div>
                   <label style={{
                     display: 'block',
@@ -1171,9 +1106,42 @@ const AssessmentManagement = () => {
                     }}
                   >
                     <option value="">Select Subject</option>
-                    {subjects.map(subject => (
+                    {console.log('Subjects in dropdown:', subjects) || subjects.map(subject => (
                       <option key={subject.id} value={subject.id}>
                         {subject.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#4a5568',
+                    marginBottom: '8px'
+                  }}>
+                    Class
+                  </label>
+                  <select
+                    value={formData.classId}
+                    onChange={(e) => setFormData({...formData, classId: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '14px 16px',
+                      border: errors.classId ? '2px solid #ef4444' : '1px solid rgba(102, 126, 234, 0.3)',
+                      borderRadius: '12px',
+                      fontSize: '15px',
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      fontWeight: '500',
+                      color: '#1a202c'
+                    }}
+                  >
+                    <option value="">Select Class</option>
+                    {classes.map(cls => (
+                      <option key={cls.id} value={cls.id}>
+                        {cls.name} - {cls.section}
                       </option>
                     ))}
                   </select>

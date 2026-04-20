@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, BookOpen, Calendar, TrendingUp, Award, Calculator, Clock, AlertCircle, CheckCircle, XCircle, GraduationCap, Target, Activity, Zap } from 'lucide-react';
+import { BookOpen, Users, Calendar, Award, TrendingUp, Clock, Target, UserCheck, FileText, BarChart3, Activity, GraduationCap } from 'lucide-react';
 import academicService from '../../services/academicService';
 import schoolService from '../../services/schoolService';
+import { studentAPI } from '../../services/teacherStudentService';
 
 const TeacherDashboard = () => {
+  console.log('TeacherDashboard component rendering');
   const [dashboardData, setDashboardData] = useState({
     assessments: [],
     grades: [],
@@ -26,6 +28,7 @@ const TeacherDashboard = () => {
   const loadTeacherDashboardData = async () => {
     try {
       setLoading(true);
+      const teacherId = 'teacher-1'; // Mock teacher ID
       
       const [assessmentsData, gradesData, subjectsData, classesData, studentsData] = await Promise.all([
         academicService.getAllAssessments().catch(err => {
@@ -36,47 +39,59 @@ const TeacherDashboard = () => {
           console.error('Error fetching grades:', err);
           return [];
         }),
-        academicService.getAllSubjects().catch(err => {
-          console.error('Error fetching subjects:', err);
+        academicService.getTeacherSubjects(teacherId).catch(err => {
+          console.error('Error fetching teacher subjects:', err);
           return [];
         }),
         schoolService.getAllClasses().catch(err => {
           console.error('Error fetching classes:', err);
           return [];
         }),
-        schoolService.getAllStudents().catch(err => {
+        studentAPI.getAllStudents().catch(err => {
           console.error('Error fetching students:', err);
           return [];
         })
       ]);
-
-      const today = new Date();
-      const recentAssessments = assessmentsData
-        .filter(a => new Date(a.date) >= new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000))
-        .slice(0, 5);
-
-      const upcomingAssessments = assessmentsData
-        .filter(a => new Date(a.date) >= today)
-        .slice(0, 3);
-
-      const gradeValues = gradesData.map(g => parseFloat(g.value || 0));
+      
+      // Filter data to only show teacher's assigned subjects
+      const teacherAssessments = assessmentsData.filter(assessment => 
+        subjectsData.some(subject => subject.id === assessment.subjectId)
+      );
+      
+      const teacherGrades = gradesData.filter(grade => 
+        subjectsData.some(subject => subject.id === grade.subjectId)
+      );
+      
+      console.log('Dashboard - Teacher subjects:', subjectsData);
+      console.log('Dashboard - Teacher assessments:', teacherAssessments);
+      console.log('Dashboard - Teacher grades:', teacherGrades);
+      
+      // Calculate statistics
       const gradeStats = {
-        average: gradeValues.length > 0 ? (gradeValues.reduce((sum, g) => sum + g, 0) / gradeValues.length).toFixed(1) : 0,
-        highest: gradeValues.length > 0 ? Math.max(...gradeValues) : 0,
-        lowest: gradeValues.length > 0 ? Math.min(...gradeValues) : 0,
-        total: gradesData.length
+        average: teacherGrades.length > 0 ? 
+          teacherGrades.reduce((sum, grade) => sum + (grade.score || 0), 0) / teacherGrades.length : 0,
+        highest: teacherGrades.length > 0 ? 
+          Math.max(...teacherGrades.map(grade => grade.score || 0)) : 0,
+        lowest: teacherGrades.length > 0 ? 
+          Math.min(...teacherGrades.map(grade => grade.score || 0)) : 0,
+        total: teacherGrades.length
       };
-
+      
+      // Get recent assessments (last 5)
+      const recentAssessments = teacherAssessments
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5);
+      
       setDashboardData({
-        assessments: assessmentsData,
-        grades: gradesData,
+        assessments: teacherAssessments,
+        grades: teacherGrades,
         subjects: subjectsData,
         classes: classesData,
         students: studentsData,
         recentAssessments,
-        upcomingAssessments,
         gradeStats
       });
+      
       setError(null);
     } catch (err) {
       console.error('Error loading teacher dashboard data:', err);

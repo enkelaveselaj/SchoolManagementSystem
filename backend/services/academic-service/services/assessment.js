@@ -5,12 +5,8 @@ class AssessmentService {
   async createAssessment(data) {
     const assessment = await assessmentRepo.create(data);
 
-    // 🔥 AUTO RECALCULATE GRADE
-    await gradeService.calculateFinalGrade(
-      data.studentId,
-      data.subjectId,
-      data.teacherId
-    );
+    // Note: Grade calculation will be done when individual student scores are added
+    // since assessments are now class-based, not student-based
 
     return assessment;
   }
@@ -22,12 +18,8 @@ class AssessmentService {
   async updateAssessment(id, data) {
     await assessmentRepo.update(id, data);
 
-    // 🔥 AUTO RECALCULATE AFTER UPDATE
-    await gradeService.calculateFinalGrade(
-      data.studentId,
-      data.subjectId,
-      data.teacherId
-    );
+    // Note: Grade calculation will be done when individual student scores are updated
+    // since assessments are now class-based, not student-based
 
     return { message: "Assessment updated" };
   }

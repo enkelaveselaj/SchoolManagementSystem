@@ -8,5 +8,6 @@ router.get('/', subjectController.getAll);
 router.get('/:id', subjectController.getById);
 router.put('/:id', subjectController.update);
 router.delete('/:id', subjectController.delete);
+router.get('/teacher-subjects/:teacherId', subjectController.getTeacherSubjects);
 
 module.exports = router;

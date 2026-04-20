@@ -49,6 +49,29 @@ class SubjectController {
       res.status(500).json({ error: err.message });
     }
   }
+
+  async getTeacherSubjects(req, res) {
+    try {
+      const { teacherId } = req.params;
+      
+      // For now, return all subjects (in a real implementation, you'd filter by teacher assignments)
+      const subjects = await subjectService.getAllSubjects();
+      
+      // Mock teacher-subject assignments - in real implementation, this would come from a junction table
+      const mockAssignments = {
+        'teacher-1': [1, 2] // Assign teacher-1 to subjects with IDs 1 and 2
+      };
+      
+      const assignedSubjectIds = mockAssignments[teacherId] || [];
+      const teacherSubjects = subjects.filter(subject => 
+        assignedSubjectIds.includes(subject.id)
+      );
+      
+      res.json(teacherSubjects);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
 }
 
 module.exports = new SubjectController();

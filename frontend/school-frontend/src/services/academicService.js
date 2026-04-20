@@ -317,6 +317,16 @@ const academicService = {
   },
 
   // Enhanced Grade functions
+  createGrade: async (gradeData) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/grades`, gradeData)
+      return response.data
+    } catch (error) {
+      console.error('Error creating grade:', error)
+      throw error
+    }
+  },
+
   createOrUpdateGrade: async (gradeData) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/grades/create-or-update`, gradeData)

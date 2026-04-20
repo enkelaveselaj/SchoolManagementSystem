@@ -1,5 +1,14 @@
 const gradeService = require("../services/grade");
 
+exports.create = async (req, res) => {
+  try {
+    const grade = await gradeService.createGrade(req.body);
+    res.status(201).json(grade);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.calculate = async (req, res) => {
   const { studentId, subjectId, teacherId } = req.body;
 

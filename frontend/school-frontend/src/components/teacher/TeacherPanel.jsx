@@ -1,20 +1,13 @@
 import React, { useState } from 'react';
-import { BookOpen, Calculator, Users, Calendar, TrendingUp, Award, Clock, LogOut, Menu, X, GraduationCap, Home, FileText, BarChart3 } from 'lucide-react';
-import TeacherDashboard from "./TeacherDashboard";
+import { BookOpen, Calculator, Users, Calendar, TrendingUp, Award, Clock, LogOut, Menu, X, GraduationCap, FileText, BarChart3 } from 'lucide-react';
 import AssessmentManagement from "./AssessmentManagement";
 import GradeManagement from "./GradeManagement";
 
 const TeacherPanel = () => {
-  const [page, setPage] = useState('dashboard');
+  const [page, setPage] = useState('assessments');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const navigation = [
-    { 
-      id: 'dashboard', 
-      name: 'Dashboard', 
-      icon: Home,
-      description: 'Overview and statistics'
-    },
     { 
       id: 'assessments', 
       name: 'Assessments', 
@@ -36,15 +29,40 @@ const TeacherPanel = () => {
   };
 
   const renderPage = () => {
-    switch(page) {
-      case 'dashboard':
-        return <TeacherDashboard />;
-      case 'assessments':
-        return <AssessmentManagement />;
-      case 'grades':
-        return <GradeManagement />;
-      default:
-        return <TeacherDashboard />;
+    try {
+      switch(page) {
+        case 'assessments':
+          return <AssessmentManagement />;
+        case 'grades':
+          return <GradeManagement />;
+        default:
+          return <AssessmentManagement />;
+      }
+    } catch (error) {
+      console.error('Error rendering teacher page:', error);
+      return (
+        <div style={{
+          padding: '32px',
+          textAlign: 'center',
+          color: '#ef4444'
+        }}>
+          <h2>Error loading page</h2>
+          <p>There was an error loading this page. Please check the console for details.</p>
+          <button
+            onClick={() => setPage('assessments')}
+            style={{
+              padding: '12px 24px',
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            Go to Assessments
+          </button>
+        </div>
+      );
     }
   };
 

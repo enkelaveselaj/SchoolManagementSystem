@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, Filter, Check, X, AlertCircle, Calculator, TrendingUp, Users, BookOpen, Award, Download, Target, Clock, FileText } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, Check, X, AlertCircle, BookOpen, Users, Clock, Calendar, Award, Target, UserCheck, FileText, Save, User, TrendingUp, TrendingDown, BarChart3, Calculator, Download } from 'lucide-react';
 import academicService from '../../services/academicService';
 import schoolService from '../../services/schoolService';
+import { studentAPI } from '../../services/teacherStudentService';
 
 const GradeManagement = () => {
   // Mock teacher ID - in real app this would come from auth context
@@ -48,21 +49,21 @@ const GradeManagement = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [gradesData, studentsData, teacherSubjectsData, classesData, sectionsData] = await Promise.all([
+      const [gradesData, subjectsData, classesData, studentsData, sectionsData] = await Promise.all([
         academicService.getAllGrades().catch(err => {
           console.error('Error fetching grades:', err);
           return [];
         }),
-        schoolService.getAllStudents().catch(err => {
-          console.error('Error fetching students:', err);
-          return [];
-        }),
-        academicService.getTeacherSubjects(teacherId).catch(err => {
-          console.error('Error fetching teacher subjects:', err);
+        academicService.getAllSubjects().catch(err => {
+          console.error('Error fetching subjects:', err);
           return [];
         }),
         schoolService.getAllClasses().catch(err => {
           console.error('Error fetching classes:', err);
+          return [];
+        }),
+        studentAPI.getAllStudents().catch(err => {
+          console.error('Error fetching students:', err);
           return [];
         }),
         schoolService.getAllSections().catch(err => {
@@ -71,15 +72,13 @@ const GradeManagement = () => {
         })
       ]);
       
-      // Filter grades to only show those for teacher's subjects
-      const teacherGrades = gradesData.filter(grade => 
-        teacherSubjectsData.some(subject => subject.id === grade.subjectId)
-      );
+      console.log('All subjects loaded for grades:', subjectsData);
+      console.log('All grades loaded:', gradesData);
       
-      setGrades(teacherGrades);
-      setStudents(studentsData);
-      setSubjects(teacherSubjectsData);
+      setGrades(gradesData);
+      setSubjects(subjectsData);
       setClasses(classesData);
+      setStudents(studentsData);
       setSections(sectionsData);
       setErrors({});
     } catch (err) {
@@ -1121,9 +1120,9 @@ const GradeManagement = () => {
                     }}
                   >
                     <option value="">Select Student</option>
-                    {students.map(student => (
+                    {console.log('Students in dropdown:', students) || students.map(student => (
                       <option key={student.id} value={student.id}>
-                        {student.name}
+                        {student.name || `${student.firstName} ${student.lastName}` || `Student ${student.id}`}
                       </option>
                     ))}
                   </select>

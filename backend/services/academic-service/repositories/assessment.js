@@ -4,7 +4,7 @@ const authServiceClient = require("../services/authServiceClient");
 class AssessmentRepository {
   async create(data) {
     
-    await authServiceClient.validateUser(data.studentId, 'Student');
+    // Only validate teacher since assessments are now class-based, not student-based
     await authServiceClient.validateUser(data.teacherId, 'Teacher');
     
     return Assessment.create(data);
@@ -29,9 +29,7 @@ class AssessmentRepository {
 
   async update(id, data) {
     
-    if (data.studentId) {
-      await authServiceClient.validateUser(data.studentId, 'Student');
-    }
+    // Only validate teacher since assessments are now class-based, not student-based
     if (data.teacherId) {
       await authServiceClient.validateUser(data.teacherId, 'Teacher');
     }
@@ -51,14 +49,11 @@ class AssessmentRepository {
   
     const enrichedAssessments = await Promise.all(
       assessments.map(async (assessment) => {
-        const [student, teacher] = await Promise.all([
-          authServiceClient.getUserById(assessment.studentId),
-          authServiceClient.getUserById(assessment.teacherId),
-        ]);
+        // Only get teacher details since assessments are now class-based, not student-based
+        const teacher = await authServiceClient.getUserById(assessment.teacherId);
 
         return {
           ...assessment.toJSON(),
-          student,
           teacher,
         };
       })

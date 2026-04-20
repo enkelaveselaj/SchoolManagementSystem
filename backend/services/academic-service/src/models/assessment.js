@@ -5,13 +5,13 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    studentId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
     subjectId: {
       type: DataTypes.UUID,
       allowNull: false,
+    },
+    classId: {
+      type: DataTypes.UUID,
+      allowNull: true,
     },
     teacherId: {
       type: DataTypes.UUID,
@@ -25,22 +25,24 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    score: {
-      type: DataTypes.FLOAT,
-      allowNull: false,
-    },
     maxScore: {
       type: DataTypes.FLOAT,
       allowNull: false,
+      defaultValue: 100,
     },
     weight: {
       type: DataTypes.FLOAT,
       allowNull: false,
+      defaultValue: 10,
     },
     date: {
       type: DataTypes.DATE,
       allowNull: false,
     },
+  }, {
+    // This will automatically add the new columns to the table
+    // if they don't exist, Sequelize will create them
+    alter: true
   });
 
   return Assessment;

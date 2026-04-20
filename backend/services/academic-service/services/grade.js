@@ -2,6 +2,10 @@ const gradeRepo = require("../repositories/grade");
 const assessmentRepo = require("../repositories/assessment");
 
 class GradeService {
+  async createGrade(data) {
+    return gradeRepo.create(data);
+  }
+
   async calculateFinalGrade(studentId, subjectId, teacherId) {
     const assessments = await assessmentRepo.findByStudentAndSubject(
       studentId,
