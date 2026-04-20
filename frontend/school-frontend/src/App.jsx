@@ -4,6 +4,7 @@ import ClassManagement from './components/ClassManagement'
 import SectionManagement from './components/SectionManagement'
 import StudentManagement from './components/StudentManagement'
 import TeacherManagement from './components/TeacherManagement'
+import SubjectManagement from './components/SubjectManagement'
 import Dashboard from './components/Dashboard'
 import Login from './components/Login'
 import Register from './components/Register'
@@ -588,6 +589,12 @@ const App = () => {
             >
               Teachers
             </button>
+            <button 
+              onClick={() => setPage('admin-subjects')}
+              className={`admin-nav-btn ${page === 'admin-subjects' ? 'active' : ''}`}
+            >
+              Subjects
+            </button>
                         <button 
               onClick={() => setPage('home')}
               className="admin-nav-btn back-btn"
@@ -643,6 +650,7 @@ const App = () => {
       {page === 'admin-sections' && <SectionManagement />}
       {page === 'admin-students' && <StudentManagement />}
       {page === 'admin-teachers' && <TeacherManagement />}
+      {page === 'admin-subjects' && <SubjectManagement />}
       {page === 'teacher-panel' && <TeacherPanel />}
     </div>
   )

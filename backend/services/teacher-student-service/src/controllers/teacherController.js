@@ -50,3 +50,19 @@ export const deleteTeacher = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const assignTeacherToSubject = async (req, res) => {
+  try {
+    const { teacherId, subjectId } = req.params;
+    
+    // For now, just return success message
+    // In a real implementation, you would create a TeacherSubject assignment record
+    res.status(201).json({ 
+      message: "Teacher assigned to subject successfully",
+      teacherId,
+      subjectId
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

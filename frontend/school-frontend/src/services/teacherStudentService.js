@@ -83,6 +83,9 @@ export const teacherAPI = {
   // Assign teacher to class
   assignTeacherToClass: (teacherId, classId) => teacherStudentService.post(`/teachers/${teacherId}/assign/${classId}`),
   
+  // Assign teacher to subject
+  assignTeacherToSubject: (teacherId, subjectId) => teacherStudentService.post(`/teachers/${teacherId}/subjects/${subjectId}`),
+  
   // Get teacher's classes
   getTeacherClasses: (teacherId) => teacherStudentService.get(`/teachers/${teacherId}/classes`),
   

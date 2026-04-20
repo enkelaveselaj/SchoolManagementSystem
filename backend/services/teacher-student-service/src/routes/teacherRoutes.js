@@ -9,5 +9,6 @@ router.get("/", controller.getAllTeachers);
 router.get("/:id", controller.getTeacherById);
 router.put("/:id", controller.updateTeacher);
 router.delete("/:id", controller.deleteTeacher);
+router.post("/:teacherId/subjects/:subjectId", controller.assignTeacherToSubject);
 
 export default router;

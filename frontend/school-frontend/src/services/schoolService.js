@@ -219,24 +219,13 @@ const schoolService = {
     }
   },
 
-  // Student functions
   getAllStudents: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/students`)
-      return response.data
+      const response = await axios.get(`${API_BASE_URL}/students`);
+      return response.data;
     } catch (error) {
-      console.error('Error fetching students:', error)
-      throw error
-    }
-  },
-
-  getStudentById: async (id) => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/students/${id}`)
-      return response.data
-    } catch (error) {
-      console.error('Error fetching student:', error)
-      throw error
+      console.error('Error fetching students:', error);
+      throw error;
     }
   },
 
@@ -276,6 +265,16 @@ const schoolService = {
     } catch (error) {
       console.error('Error fetching students by class:', error)
       throw error
+    }
+  },
+
+  getAllTeachers: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/teachers`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching teachers:', error);
+      throw error;
     }
   }
 }

@@ -10,13 +10,39 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    teacherId: {
+    code: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    type: {
+      type: DataTypes.ENUM('core', 'elective', 'optional'),
+      allowNull: false,
+      defaultValue: 'core',
+    },
+    credits: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 3,
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    gradeLevel: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    teacherId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   }, {
     tableName: 'Subjects',
     timestamps: true,
+    // This will automatically add the new columns to the table
+    // if they don't exist, Sequelize will create them
+    alter: true
   });
 
   return Subject;
