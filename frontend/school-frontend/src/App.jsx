@@ -13,6 +13,7 @@ import FAQManagement from './components/FAQManagement'
 import AssessmentManagement from './components/teacher/AssessmentManagement'
 import GradeManagement from './components/teacher/GradeManagement'
 import TeacherPanel from './components/teacher/TeacherPanel'
+import StudentClassAssignment from './components/admin/StudentClassAssignment'
 import './styles.css'
 
 const App = () => {
@@ -595,7 +596,13 @@ const App = () => {
             >
               Subjects
             </button>
-                        <button 
+            <button 
+              onClick={() => setPage('admin-student-assignment')}
+              className={`admin-nav-btn ${page === 'admin-student-assignment' ? 'active' : ''}`}
+            >
+              Student Assignment
+            </button>
+            <button 
               onClick={() => setPage('home')}
               className="admin-nav-btn back-btn"
             >
@@ -651,6 +658,7 @@ const App = () => {
       {page === 'admin-students' && <StudentManagement />}
       {page === 'admin-teachers' && <TeacherManagement />}
       {page === 'admin-subjects' && <SubjectManagement />}
+      {page === 'admin-student-assignment' && <StudentClassAssignment />}
       {page === 'teacher-panel' && <TeacherPanel />}
     </div>
   )

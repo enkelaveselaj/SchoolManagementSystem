@@ -203,101 +203,344 @@ const TeacherManagement = () => {
   }
 
   return (
-    <div className="teacher-management">
+    <div style={{
+      padding: '0'
+    }}>
       {/* Header */}
-      <div className="page-header">
-        <div className="page-header__content">
-          <div className="page-header__title">
-            <GraduationCap className="page-header__icon" size={28} />
-            <h1>Teacher Management</h1>
+      <div style={{
+        marginBottom: '32px'
+      }}>
+        <h1 style={{
+          fontSize: '32px',
+          fontWeight: '800',
+          color: '#1a202c',
+          margin: '0 0 8px 0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white'
+          }}>
+            <GraduationCap size={28} />
           </div>
-          <p className="page-header__description">
-            Manage teacher records, assignments, and professional information
-          </p>
-        </div>
-        <button 
-          className="btn btn--primary btn--with-icon"
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-        >
-          <Plus size={20} />
-          Add Teacher
-        </button>
+          Teacher Management
+        </h1>
+        <p style={{
+          fontSize: '16px',
+          color: '#718096',
+          margin: 0
+        }}>
+          Manage teacher records, assignments, and professional information.
+        </p>
       </div>
 
       {/* Filters and Search */}
-      <div className="page-controls">
-        <div className="search-filter-group">
-          <div className="search-box">
-            <Search size={20} className="search-box__icon" />
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '32px',
+        flexWrap: 'wrap',
+        gap: '16px'
+      }}>
+        <div style={{
+          display: 'flex',
+          gap: '16px',
+          flex: 1,
+          flexWrap: 'wrap'
+        }}>
+          <div style={{
+            position: 'relative',
+            flex: 1,
+            minWidth: '250px'
+          }}>
+            <Search size={20} style={{
+              position: 'absolute',
+              left: '16px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#718096'
+            }} />
             <input
               type="text"
               placeholder="Search teachers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-box__input"
+              style={{
+                width: '100%',
+                padding: '12px 16px 12px 48px',
+                border: '1px solid rgba(102, 126, 234, 0.3)',
+                borderRadius: '12px',
+                fontSize: '14px',
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                fontWeight: '500',
+                color: '#1a202c'
+              }}
             />
           </div>
           
-          <div className="filter-dropdown">
-            <Award className="filter-dropdown__icon" size={20} />
-            <select 
-              value={filterSpecialization} 
-              onChange={(e) => setFilterSpecialization(e.target.value)}
-              className="filter-dropdown__select"
-            >
-              <option value="">All Specializations</option>
-              {specializations.map(spec => (
-                <option key={spec} value={spec}>
-                  {spec}
-                </option>
-              ))}
-            </select>
+          <select 
+            value={filterSpecialization} 
+            onChange={(e) => setFilterSpecialization(e.target.value)}
+            style={{
+              padding: '12px 16px',
+              border: '1px solid rgba(102, 126, 234, 0.3)',
+              borderRadius: '12px',
+              fontSize: '14px',
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              fontWeight: '500',
+              color: '#1a202c',
+              minWidth: '150px'
+            }}
+          >
+            <option value="">All Specializations</option>
+            {specializations.map(spec => (
+              <option key={spec} value={spec}>
+                {spec}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div style={{
+          display: 'flex',
+          gap: '12px'
+        }}>
+          <button
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+            style={{
+              padding: '12px 24px',
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <Plus size={18} />
+            Add Teacher
+          </button>
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: '20px',
+        marginBottom: '32px'
+      }}>
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          padding: '24px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          transition: 'all 0.3s ease'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white'
+            }}>
+              <Users size={24} />
+            </div>
+            <div>
+              <div style={{
+                fontSize: '28px',
+                fontWeight: '700',
+                color: '#1a202c',
+                margin: '0'
+              }}>
+                {teachers.length}
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: '#718096',
+                fontWeight: '500'
+              }}>
+                Total Teachers
+              </div>
+            </div>
           </div>
         </div>
         
-        <div className="stats-summary">
-          <span className="stats-summary__count">
-            {filteredTeachers.length} {filteredTeachers.length === 1 ? 'Teacher' : 'Teachers'}
-          </span>
-          <span className="stats-summary__total">
-            Total: {teachers.length} teachers
-          </span>
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          padding: '24px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          transition: 'all 0.3s ease'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              background: 'linear-gradient(135deg, #f093fb, #f5576c)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white'
+            }}>
+              <Award size={24} />
+            </div>
+            <div>
+              <div style={{
+                fontSize: '28px',
+                fontWeight: '700',
+                color: '#1a202c',
+                margin: '0'
+              }}>
+                {specializations.length}
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: '#718096',
+                fontWeight: '500'
+              }}>
+                Specializations
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Teachers Grid */}
-      <div className="teachers-grid">
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+        gap: '24px'
+      }}>
         {filteredTeachers.length > 0 ? (
           filteredTeachers.map((teacher) => (
-            <div key={teacher.id} className="teacher-card">
-              <div className="teacher-card__header">
-                <div className="teacher-card__title-section">
-                  <h3 className="teacher-card__title">
+            <div key={teacher.id} style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              padding: '24px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.3s ease',
+              position: 'relative'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '16px'
+              }}>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{
+                    fontSize: '18px',
+                    fontWeight: '700',
+                    color: '#1a202c',
+                    margin: '0 0 8px 0'
+                  }}>
                     {teacher.firstName} {teacher.lastName}
                   </h3>
-                  <div className="teacher-card__metadata">
-                    <span className="teacher-card__specialization">
+                  <div style={{
+                    display: 'flex',
+                    gap: '12px',
+                    flexWrap: 'wrap'
+                  }}>
+                    <span style={{
+                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                      color: 'white',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}>
                       {teacher.specialization}
                     </span>
-                    <span className="teacher-card__employee-id">
+                    <span style={{
+                      background: 'rgba(102, 126, 234, 0.1)',
+                      color: '#667eea',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}>
                       ID: {teacher.employeeId}
                     </span>
                   </div>
                 </div>
-                <div className="teacher-card__actions">
+                <div style={{
+                  display: 'flex',
+                  gap: '8px'
+                }}>
                   <button 
-                    className="btn-icon btn-icon--edit"
                     onClick={() => handleEdit(teacher)}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'rgba(102, 126, 234, 0.1)',
+                      color: '#667eea',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s ease'
+                    }}
                     title="Edit teacher"
                   >
                     <Edit2 size={16} />
                   </button>
                   <button 
-                    className="btn-icon btn-icon--delete"
                     onClick={() => handleDelete(teacher)}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      color: '#ef4444',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s ease'
+                    }}
                     title="Delete teacher"
                   >
                     <Trash2 size={16} />
@@ -305,39 +548,76 @@ const TeacherManagement = () => {
                 </div>
               </div>
               
-              <div className="teacher-card__content">
-                <div className="teacher-card__contact">
-                  <div className="contact-item">
-                    <Mail className="contact-item__icon" size={14} />
-                    <span className="contact-item__value">{teacher.email}</span>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '14px',
+                    color: '#4a5568'
+                  }}>
+                    <Mail size={14} />
+                    <span>{teacher.email}</span>
                   </div>
                   {teacher.phone && (
-                    <div className="contact-item">
-                      <Phone className="contact-item__icon" size={14} />
-                      <span className="contact-item__value">{teacher.phone}</span>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      color: '#4a5568'
+                    }}>
+                      <Phone size={14} />
+                      <span>{teacher.phone}</span>
                     </div>
                   )}
                 </div>
                 
-                <div className="teacher-card__info">
-                  <div className="info-item">
-                    <span className="info-item__label">Qualification</span>
-                    <span className="info-item__value">{teacher.qualification}</span>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  fontSize: '13px'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between'
+                  }}>
+                    <span style={{ color: '#718096', fontWeight: '500' }}>Qualification</span>
+                    <span style={{ color: '#1a202c', fontWeight: '600' }}>{teacher.qualification || 'Not specified'}</span>
                   </div>
-                  <div className="info-item">
-                    <span className="info-item__label">Experience</span>
-                    <span className="info-item__value">
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between'
+                  }}>
+                    <span style={{ color: '#718096', fontWeight: '500' }}>Experience</span>
+                    <span style={{ color: '#1a202c', fontWeight: '600' }}>
                       {teacher.experience ? `${teacher.experience} years` : 'Not specified'}
                     </span>
                   </div>
-                  <div className="info-item">
-                    <span className="info-item__label">Hire Date</span>
-                    <span className="info-item__value">{teacher.hireDate}</span>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between'
+                  }}>
+                    <span style={{ color: '#718096', fontWeight: '500' }}>Hire Date</span>
+                    <span style={{ color: '#1a202c', fontWeight: '600' }}>{teacher.hireDate}</span>
                   </div>
                   {teacher.salary && (
-                    <div className="info-item">
-                      <span className="info-item__label">Salary</span>
-                      <span className="info-item__value">${teacher.salary.toLocaleString()}/year</span>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between'
+                    }}>
+                      <span style={{ color: '#718096', fontWeight: '500' }}>Salary</span>
+                      <span style={{ color: '#1a202c', fontWeight: '600' }}>${teacher.salary.toLocaleString()}/year</span>
                     </div>
                   )}
                 </div>
@@ -345,23 +625,68 @@ const TeacherManagement = () => {
             </div>
           ))
         ) : (
-          <div className="empty-state">
-            <GraduationCap className="empty-state__icon" size={48} />
-            <h3 className="empty-state__title">No Teachers Found</h3>
-            <p className="empty-state__description">
+          <div style={{
+            textAlign: 'center',
+            padding: '64px 32px',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              margin: '0 auto 24px'
+            }}>
+              <GraduationCap size={32} />
+            </div>
+            <h3 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#1a202c',
+              margin: '0 0 12px'
+            }}>No Teachers Found</h3>
+            <p style={{
+              fontSize: '16px',
+              color: '#718096',
+              margin: '0 0 24px',
+              lineHeight: '1.5'
+            }}>
               {searchTerm || filterSpecialization
                 ? 'No teachers match your search criteria.'
                 : 'Get started by adding your first teacher.'}
             </p>
             {!searchTerm && !filterSpecialization && (
-              <button 
-                className="btn btn--primary"
+              <button
                 onClick={() => {
                   resetForm();
                   setShowForm(true);
                 }}
+                style={{
+                  padding: '12px 24px',
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  margin: '0 auto'
+                }}
               >
-                <Plus size={20} />
+                <Plus size={18} />
                 Add First Teacher
               </button>
             )}
