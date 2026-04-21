@@ -39,10 +39,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     tableName: 'Subjects',
-    timestamps: true,
-    // This will automatically add the new columns to the table
-    // if they don't exist, Sequelize will create them
-    alter: true
+    timestamps: false
   });
 
   return Subject;

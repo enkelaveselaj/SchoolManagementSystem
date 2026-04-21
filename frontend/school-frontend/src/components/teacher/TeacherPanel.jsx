@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { BookOpen, Calculator, Users, Calendar, TrendingUp, Award, Clock, LogOut, Menu, X, GraduationCap, FileText, BarChart3 } from 'lucide-react';
+import { BookOpen, Calculator, Users, Calendar, TrendingUp, Award, Clock, LogOut, Menu, X, GraduationCap, FileText, BarChart3, UserCheck } from 'lucide-react';
 import AssessmentManagement from "./AssessmentManagement";
 import GradeManagement from "./GradeManagement";
+import AttendanceManagement from "./AttendanceManagement";
+import TimetableManagement from "./TimetableManagement";
 
 const TeacherPanel = () => {
   const [page, setPage] = useState('assessments');
@@ -19,6 +21,18 @@ const TeacherPanel = () => {
       name: 'Grades', 
       icon: BarChart3,
       description: 'Student grade management'
+    },
+    { 
+      id: 'attendance', 
+      name: 'Attendance', 
+      icon: UserCheck,
+      description: 'Mark and track student attendance'
+    },
+    { 
+      id: 'timetable', 
+      name: 'Timetable', 
+      icon: Clock,
+      description: 'Manage class schedules and timetables'
     }
   ];
 
@@ -35,6 +49,10 @@ const TeacherPanel = () => {
           return <AssessmentManagement />;
         case 'grades':
           return <GradeManagement />;
+        case 'attendance':
+          return <AttendanceManagement />;
+        case 'timetable':
+          return <TimetableManagement />;
         default:
           return <AssessmentManagement />;
       }

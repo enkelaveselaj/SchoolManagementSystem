@@ -1,5 +1,5 @@
 // src/repositories/timetable.js
-const { Timetable } = require("..//src/models");
+const { Timetable } = require("../src/models");
 
 class TimetableRepository {
   async create(data) {

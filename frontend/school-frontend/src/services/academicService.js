@@ -345,6 +345,57 @@ const academicService = {
       console.error('Error fetching student grades by class:', error)
       throw error
     }
+  },
+  
+  // Timetable methods
+  getAllTimetables: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/timetable`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching timetables:', error)
+      throw error
+    }
+  },
+  
+  getTimetableById: async (id) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/timetable/${id}`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching timetable:', error)
+      throw error
+    }
+  },
+  
+  createTimetable: async (data) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/timetable`, data)
+      return response.data
+    } catch (error) {
+      console.error('Error creating timetable:', error)
+      throw error
+    }
+  },
+  
+  updateTimetable: async (id, data) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/timetable/${id}`, data)
+      return response.data
+    } catch (error) {
+      console.error('Error updating timetable:', error)
+      throw error
+    }
+  },
+  
+  deleteTimetable: async (id) => {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/timetable/${id}`)
+      return response.data
+    } catch (error) {
+      console.error('Error deleting timetable:', error)
+      throw error
+    }
   }
 }
 

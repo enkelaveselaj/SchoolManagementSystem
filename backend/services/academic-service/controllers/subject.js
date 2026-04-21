@@ -13,16 +13,22 @@ class SubjectController {
 
   async getAll(req, res) {
     try {
+      console.log('Getting all subjects...');
       const subjects = await subjectService.getAllSubjects();
+      console.log('Subjects found:', subjects);
+      console.log('Subjects count:', subjects.length);
       res.json(subjects);
     } catch (err) {
+      console.error('Error getting subjects:', err);
       res.status(500).json({ error: err.message });
     }
   }
 
   async getById(req, res) {
     try {
+      console.log('Getting subject by ID...');
       const subject = await subjectService.getSubjectById(req.params.id);
+      console.log('Subject found:', subject);
       if (!subject) return res.status(404).json({ message: 'Subject not found' });
       res.json(subject);
     } catch (err) {

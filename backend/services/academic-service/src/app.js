@@ -21,7 +21,12 @@ app.use("/timetable", timetableRoutes);
 app.use("/assessments", assessmentRoutes );
 app.use("/grades", gradeRoutes);
 
+const { Timetable } = require("./models");
+
 sequelize.sync().then(() => {
+  // Force sync Timetable model to create table if it doesn't exist
+  return Timetable.sync({ force: false, alter: true });
+}).then(() => {
   app.listen(process.env.PORT, () => {
     console.log(`Academic service running on port ${process.env.PORT}`);
   });
