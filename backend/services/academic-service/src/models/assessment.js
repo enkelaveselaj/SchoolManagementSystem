@@ -45,5 +45,9 @@ module.exports = (sequelize, DataTypes) => {
     alter: true
   });
 
+  Assessment.associate = (models) => {
+    Assessment.hasMany(models.AssessmentScore, { foreignKey: 'assessmentId', as: 'scores' });
+  };
+
   return Assessment;
 };

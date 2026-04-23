@@ -132,18 +132,25 @@ const AssessmentManagement = () => {
     try {
       setSelectedAssessment(assessment);
       
-      // Get students for the assessment's class
-      const classStudents = students.filter(student => 
-        !assessment.classId || student.classId === assessment.classId
-      );
+      // Get students for the assessment's class (or all students if no class specified)
+      // For now, show all students since class filtering isn't working properly
+      const classStudents = students;
+      
+      // Get existing scores for this assessment
+      const existingScores = await academicService.getScoresByAssessment(assessment.id);
+      const scoresMap = new Map(existingScores.map(score => [score.studentId, score]));
       
       // Initialize student scores with existing scores if available
-      const initialScores = classStudents.map(student => ({
-        studentId: student.id,
-        studentName: student.name,
-        score: 0,
-        maxScore: assessment.maxScore || 100
-      }));
+      const initialScores = classStudents.map(student => {
+        const existingScore = scoresMap.get(student.id);
+        return {
+          studentId: student.id,
+          studentName: `${student.firstName} ${student.lastName}`,
+          score: existingScore ? existingScore.score : 0,
+          maxScore: assessment.maxScore || 100,
+          remarks: existingScore ? existingScore.remarks || '' : ''
+        };
+      });
       
       setStudentScores(initialScores);
       setShowScoringForm(true);
@@ -160,21 +167,12 @@ const AssessmentManagement = () => {
 
       const scoresData = studentScores.map(score => ({
         studentId: score.studentId,
-        assessmentId: selectedAssessment.id,
         score: parseFloat(score.score),
-        maxScore: score.maxScore,
-        subjectId: selectedAssessment.subjectId,
-        teacherId: teacherId
+        remarks: score.remarks || ''
       }));
 
-      // Save all scores
-      for (const scoreData of scoresData) {
-        await academicService.updateStudentAssessmentScore(
-          scoreData.assessmentId,
-          scoreData.studentId,
-          scoreData.score
-        );
-      }
+      // Use batch create for better performance
+      await academicService.batchCreateScores(selectedAssessment.id, scoresData);
 
       await loadData();
       setShowScoringForm(false);
@@ -193,6 +191,16 @@ const AssessmentManagement = () => {
       prevScores.map(s => 
         s.studentId === studentId 
           ? { ...s, score: Math.min(Math.max(0, score), s.maxScore) }
+          : s
+      )
+    );
+  };
+
+  const updateStudentRemarks = (studentId, remarks) => {
+    setStudentScores(prevScores => 
+      prevScores.map(s => 
+        s.studentId === studentId 
+          ? { ...s, remarks }
           : s
       )
     );
@@ -1452,6 +1460,21 @@ const AssessmentManagement = () => {
                       }}>
                         /{studentScore.maxScore}
                       </span>
+                      <input
+                        type="text"
+                        value={studentScore.remarks || ''}
+                        onChange={(e) => updateStudentRemarks(studentScore.studentId, e.target.value)}
+                        placeholder="Remarks..."
+                        style={{
+                          width: '150px',
+                          padding: '10px 12px',
+                          border: '1px solid rgba(102, 126, 234, 0.3)',
+                          borderRadius: '10px',
+                          fontSize: '14px',
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          color: '#1a202c'
+                        }}
+                      />
                     </div>
                   </div>
                 ))}

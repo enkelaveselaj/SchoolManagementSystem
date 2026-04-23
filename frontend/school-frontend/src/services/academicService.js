@@ -396,6 +396,108 @@ const academicService = {
       console.error('Error deleting timetable:', error)
       throw error
     }
+  },
+  
+  // Assessment Score methods
+  createAssessmentScore: async (data) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/assessment-scores`, data)
+      return response.data
+    } catch (error) {
+      console.error('Error creating assessment score:', error)
+      throw error
+    }
+  },
+  
+  getAllAssessmentScores: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/assessment-scores`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching assessment scores:', error)
+      throw error
+    }
+  },
+  
+  getScoresByAssessment: async (assessmentId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/assessment-scores/assessment/${assessmentId}`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching assessment scores:', error)
+      throw error
+    }
+  },
+  
+  getScoresByStudent: async (studentId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/assessment-scores/student/${studentId}`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching student scores:', error)
+      throw error
+    }
+  },
+  
+  getScoresByStudentAndSubject: async (studentId, subjectId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/assessment-scores/student/${studentId}/subject/${subjectId}`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching student subject scores:', error)
+      throw error
+    }
+  },
+  
+  calculateStudentGrade: async (studentId, subjectId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/assessment-scores/student/${studentId}/subject/${subjectId}/grade`)
+      return response.data
+    } catch (error) {
+      console.error('Error calculating student grade:', error)
+      throw error
+    }
+  },
+  
+  batchCreateScores: async (assessmentId, scores) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/assessment-scores/batch`, { assessmentId, scores })
+      return response.data
+    } catch (error) {
+      console.error('Error batch creating scores:', error)
+      throw error
+    }
+  },
+  
+  updateAssessmentScore: async (id, data) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/assessment-scores/${id}`, data)
+      return response.data
+    } catch (error) {
+      console.error('Error updating assessment score:', error)
+      throw error
+    }
+  },
+  
+  deleteAssessmentScore: async (id) => {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/assessment-scores/${id}`)
+      return response.data
+    } catch (error) {
+      console.error('Error deleting assessment score:', error)
+      throw error
+    }
+  },
+
+  // Student endpoints
+  getAllStudents: async () => {
+    try {
+      const response = await axios.get('http://localhost:5004/students')
+      return response.data
+    } catch (error) {
+      console.error('Error fetching students:', error)
+      throw error
+    }
   }
 }
 
