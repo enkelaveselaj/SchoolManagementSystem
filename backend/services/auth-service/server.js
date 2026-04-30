@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
 import db from "./db.js";
 
@@ -9,6 +10,14 @@ import { verifyToken } from "./middleware/authMiddleware.js";
 dotenv.config();
 
 const app = express();
+
+const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000").split(",").map(origin => origin.trim())
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  optionsSuccessStatus: 200
+}))
 
 app.use(express.json());
 

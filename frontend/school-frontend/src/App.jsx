@@ -7,13 +7,14 @@ import TeacherManagement from './components/TeacherManagement'
 import SubjectManagement from './components/SubjectManagement'
 import Dashboard from './components/Dashboard'
 import Login from './components/Login'
-import Register from './components/Register'
 import schoolService from './services/schoolService'
 import FAQManagement from './components/FAQManagement'
 import AssessmentManagement from './components/teacher/AssessmentManagement'
 import GradeManagement from './components/teacher/GradeManagement'
 import TeacherPanel from './components/teacher/TeacherPanel'
 import StudentClassAssignment from './components/admin/StudentClassAssignment'
+import ParentManagement from './components/ParentManagement'
+import LandingHero from './components/landing/LandingHero'
 import './styles.css'
 
 const App = () => {
@@ -38,9 +39,19 @@ const App = () => {
     }
   })
 
+  const isLoggedIn = Boolean(auth?.token)
+  const userRole = auth?.user?.role?.toLowerCase?.() || ''
+  const isAdmin = isLoggedIn && (userRole === 'admin' || auth?.user?.is_super_admin)
+
   useEffect(() => {
     fetchSchoolData()
   }, [])
+
+  useEffect(() => {
+    if (!isLoggedIn && page === 'teacher-panel') {
+      setPage('login')
+    }
+  }, [isLoggedIn, page])
 
   const fetchSchoolData = async () => {
     try {
@@ -95,7 +106,7 @@ const App = () => {
           </div>
 
           <div className="nav-actions">
-            {!auth?.token ? (
+            {!isLoggedIn ? (
               <>
                 <button
                   onClick={() => setPage('login')}
@@ -105,15 +116,6 @@ const App = () => {
                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   <span>Login</span>
-                </button>
-                <button
-                  onClick={() => setPage('register')}
-                  className={`nav-btn nav-btn-primary ${page === 'register' ? 'active' : ''}`}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 11v6M19 8v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span>Register</span>
                 </button>
               </>
             ) : (
@@ -143,16 +145,18 @@ const App = () => {
               </>
             )}
 
-            <button
-              onClick={() => setPage('admin')}
-              className={`nav-btn nav-btn-admin ${page === 'admin' ? 'active' : ''}`}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l10-5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span>Admin</span>
-            </button>
-            {auth?.token && (
+            {isAdmin && (
+              <button
+                onClick={() => setPage('admin')}
+                className={`nav-btn nav-btn-admin ${page === 'admin' ? 'active' : ''}`}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l10-5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>Admin</span>
+              </button>
+            )}
+            {isLoggedIn && (
               <button
                 onClick={() => setPage('teacher-panel')}
                 className={`nav-btn nav-btn-teacher ${page === 'teacher-panel' ? 'active' : ''}`}
@@ -188,143 +192,161 @@ const App = () => {
     setPage('home')
   }
 
-  const handleRegisterSuccess = () => {
-    setPage('login')
+  const renderAdminRoute = (component) => {
+    if (!isLoggedIn) {
+      return (
+        <div className="access-guard">
+          <h2>Admin access required</h2>
+          <p>Log in with an administrator account to manage school data.</p>
+          <button className="btn btn-glow" onClick={() => setPage('login')}>
+            Go to Login
+          </button>
+        </div>
+      )
+    }
+
+    if (!isAdmin) {
+      return (
+        <div className="access-guard">
+          <h2>Insufficient permissions</h2>
+          <p>This panel is only visible to accounts with the Admin role.</p>
+          <button className="btn btn-ghost" onClick={() => setPage('home')}>
+            Back to Home
+          </button>
+        </div>
+      )
+    }
+
+    return component
   }
 
   const HomePage = () => (
-    <div>
-      <section className="hero">
-        <div className="hero-background">
-          <div className="hero-pattern"></div>
-          <div className="hero-gradient"></div>
-        </div>
-        <div className="hero-content">
-          <div className="hero-badge">
-            <span className="badge-icon"> excellence</span>
-            <span className="badge-text">Ranked #1 in Academic Excellence</span>
+    <div className="landing-page">
+      {error && (
+        <div className="error-banner">
+          <div>
+            <h3>We couldn't load live school data</h3>
+            <p>Showing default highlights for now.</p>
           </div>
-          <h1 className="hero-title">
-            Excellence in Education
-            <span className="hero-subtitle">Since {schoolData?.founded || '1985'}</span>
-          </h1>
-          <p className="hero-description">
-            Nurturing tomorrow's leaders through innovative teaching, cutting-edge technology, 
-            and a commitment to academic excellence that prepares students for global success.
+          <button onClick={fetchSchoolData} className="btn btn-outline">Retry</button>
+        </div>
+      )}
+
+      <LandingHero schoolData={schoolData} />
+
+      <section className="landing-section highlight-grid">
+        <div className="section-heading">
+          <p>Signature Experience</p>
+          <h2>Beyond classrooms, we design meaningful learning journeys.</h2>
+        </div>
+        <div className="card-grid">
+          {[
+            {
+              title: 'Immersive Curriculum',
+              description:
+                'Interdisciplinary tracks that blend humanities, design, science, and technology with mentorship from industry partners.',
+              tags: ['AP & IB Pathways', 'Innovation Studio', 'Global Labs']
+            },
+            {
+              title: 'Culture of Belonging',
+              description:
+                'Advisory pods, social-emotional coaching, and equitable access initiatives nurture confident student leaders.',
+              tags: ['Wellness Pods', 'Parent Circles', 'Equity Council']
+            },
+            {
+              title: 'Future Ready Toolkit',
+              description:
+                'Career intensives, public showcases, and micro-credential badges prepare students for universities and startups alike.',
+              tags: ['Portfolio Reviews', 'Startup Incubator', 'Career Sprints']
+            }
+          ].map((card) => (
+            <article key={card.title} className="story-card">
+              <div className="story-body">
+                <div className="story-icon" aria-hidden="true"></div>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </div>
+              <div className="chip-row">
+                {card.tags.map((tag) => (
+                  <span key={tag} className="chip">{tag}</span>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="landing-section experience">
+        <div className="experience-card">
+          <span className="pill pill-muted">Learning Studios</span>
+          <h3>15+ flexible studios for robotics, media arts, biotech, and culinary innovation.</h3>
+          <p>
+            Students prototype solutions alongside faculty designers and visiting entrepreneurs—turning bold questions into
+            tangible products showcased at our quarterly Expo Nights.
           </p>
-          <div className="hero-stats">
-            <div className="stat-item">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              </div>
-              <div className="stat-content">
-                <div className="stat-number">{schoolData?.students || '1,200'}</div>
-                <div className="stat-label">Students</div>
-              </div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div className="stat-content">
-                <div className="stat-number">{schoolData?.teachers || '85'}</div>
-                <div className="stat-label">Faculty</div>
-              </div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              </div>
-              <div className="stat-content">
-                <div className="stat-number">{schoolData?.programs || '25'}</div>
-                <div className="stat-label">Programs</div>
-              </div>
-            </div>
-          </div>
-          <div className="hero-actions">
-            <button className="btn-primary btn-large">
-              <span>Apply Now</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12h14m-7-7l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <button className="btn-secondary btn-large">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span>Virtual Tour</span>
-            </button>
-          </div>
+          <ul>
+            <li>Weekly design critiques with industry mentors</li>
+            <li>24/7 virtual campus for remote collaboration</li>
+            <li>Scholarship-backed innovation grants</li>
+          </ul>
         </div>
-        <div className="hero-image">
-          <div className="hero-image-placeholder">
-            <svg width="400" height="300" viewBox="0 0 400 300" fill="none">
-              <rect width="400" height="300" fill="rgba(37, 99, 235, 0.1)"/>
-              <path d="M100 150L150 100L200 120L250 80L300 110L350 90L400 120V300H0V150L50 120L100 150Z" fill="rgba(37, 99, 235, 0.2)"/>
-              <path d="M0 200L50 180L100 200L150 160L200 180L250 140L300 170L350 150L400 180V300H0V200Z" fill="rgba(37, 99, 235, 0.3)"/>
-            </svg>
+        <div className="experience-panel">
+          <div>
+            <span className="pill">Voices</span>
+            <h4>“Every project feels like we’re shipping something real.”</h4>
+            <p>— Aanya S., Grade 11 design lab lead</p>
+          </div>
+          <div className="divider"></div>
+          <div>
+            <span className="pill">Outcomes</span>
+            <p>98% of seniors graduate with university offers across three continents.</p>
           </div>
         </div>
       </section>
 
-      <section className="features">
-        <div className="container">
-          <div className="section-header">
-            <h2>Why Choose Blue Ridge Academy?</h2>
-            <p>Discover what makes us a leader in modern education</p>
+      <section className="landing-section mosaic">
+        <div className="mosaic-panel">
+          <span className="pill pill-muted">Parent Snapshot</span>
+          <h3>A campus that feels modern, inspiring, and human.</h3>
+          <p>
+            Families experience transparent communication, real-time progress dashboards, and curated community events—from
+            sunrise yoga to evening climate salons.
+          </p>
+          <div className="mosaic-grid">
+            {['Advisory', 'Studio Expo', 'Service Lab', 'Scholarships'].map((item) => (
+              <span key={item}>{item}</span>
+            ))}
           </div>
-          
-          <div className="features-grid">
+        </div>
+        <div className="mosaic-panel accent">
+          <h4>Next events</h4>
+          <div className="event-list">
             {[
-              {
-                icon: 'graduation-cap',
-                title: 'Academic Excellence',
-                description: 'Rigorous curriculum with Advanced Placement and International Baccalaureate programs',
-                features: ['AP Courses', 'IB Program', 'STEM Focus']
-              },
-              {
-                icon: 'flask',
-                title: 'Innovation Labs',
-                description: 'State-of-the-art facilities for hands-on learning and research',
-                features: ['Science Labs', 'Maker Space', 'Robotics']
-              },
-              {
-                icon: 'globe',
-                title: 'Global Perspective',
-                description: 'Diverse community with international partnerships and exchange programs',
-                features: ['20+ Countries', 'Exchange Programs', 'Cultural Events']
-              }
-            ].map((feature, index) => (
-              <div key={index} className="feature-card">
-                <div className="feature-icon">{feature.icon}</div>
-                <h3 className="feature-title">{feature.title}</h3>
-                <p className="feature-description">{feature.description}</p>
-                <div className="feature-tags">
-                  {feature.features.map((tag, i) => (
-                    <span key={i} className="feature-tag">{tag}</span>
-                  ))}
+              { title: 'Design Summit', date: 'May 24 · Hybrid' },
+              { title: 'Parent Studio Walk', date: 'June 2 · Campus' },
+              { title: 'Scholarship Lab', date: 'June 15 · Virtual' }
+            ].map((event) => (
+              <div key={event.title} className="event-row">
+                <div>
+                  <strong>{event.title}</strong>
+                  <p>{event.date}</p>
                 </div>
+                <button className="btn btn-outline">RSVP</button>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="cta">
-        <div className="container">
-          <div className="cta-content">
-            <h2>Ready to Shape Your Future?</h2>
-            <p>Join our community of learners and achievers</p>
-            <button className="btn-primary btn-large">Schedule a Visit</button>
-          </div>
+      <section className="cta-panel">
+        <div>
+          <span className="pill">Ready to visit?</span>
+          <h2>Walk the studios, meet our students, feel the energy.</h2>
+          <p>Schedule a custom tour with admissions and discover how we activate bold futures.</p>
+        </div>
+        <div className="cta-actions">
+          <button className="btn btn-glow">Schedule a Tour</button>
+          <button className="btn btn-ghost">Chat with Admissions</button>
         </div>
       </section>
     </div>
@@ -591,6 +613,12 @@ const App = () => {
               Teachers
             </button>
             <button 
+              onClick={() => setPage('admin-parents')}
+              className={`admin-nav-btn ${page === 'admin-parents' ? 'active' : ''}`}
+            >
+              Parents
+            </button>
+            <button 
               onClick={() => setPage('admin-subjects')}
               className={`admin-nav-btn ${page === 'admin-subjects' ? 'active' : ''}`}
             >
@@ -626,13 +654,6 @@ const App = () => {
   return (
     <div className="app">
       <Navigation />
-      {error && (
-        <div className="error" style={{ margin: '16px auto', maxWidth: 1100 }}>
-          <h2>Error</h2>
-          <p>{error}</p>
-          <button onClick={fetchSchoolData} className="btn-primary">Retry</button>
-        </div>
-      )}
       {page === 'home' && <HomePage />}
       {page === 'about' && <AboutPage />}
       {page === 'academics' && <AcademicsPage />}
@@ -641,25 +662,19 @@ const App = () => {
       {page === 'login' && (
         <Login
           onLoginSuccess={handleLoginSuccess}
-          onGoRegister={() => setPage('register')}
         />
       )}
-      {page === 'register' && (
-        <Register
-          onRegisterSuccess={handleRegisterSuccess}
-          onGoLogin={() => setPage('login')}
-        />
-      )}
-      {page === 'admin' && <AdminPanel />}
-      {page === 'admin-dashboard' && <Dashboard />}
-      {page === 'admin-academic-years' && <AcademicYearManagement />}
-      {page === 'admin-classes' && <ClassManagement />}
-      {page === 'admin-sections' && <SectionManagement />}
-      {page === 'admin-students' && <StudentManagement />}
-      {page === 'admin-teachers' && <TeacherManagement />}
-      {page === 'admin-subjects' && <SubjectManagement />}
-      {page === 'admin-student-assignment' && <StudentClassAssignment />}
-      {page === 'teacher-panel' && <TeacherPanel />}
+      {page === 'admin' && renderAdminRoute(<AdminPanel />)}
+      {page === 'admin-dashboard' && renderAdminRoute(<Dashboard />)}
+      {page === 'admin-academic-years' && renderAdminRoute(<AcademicYearManagement />)}
+      {page === 'admin-classes' && renderAdminRoute(<ClassManagement />)}
+      {page === 'admin-sections' && renderAdminRoute(<SectionManagement />)}
+      {page === 'admin-students' && renderAdminRoute(<StudentManagement />)}
+      {page === 'admin-teachers' && renderAdminRoute(<TeacherManagement />)}
+      {page === 'admin-subjects' && renderAdminRoute(<SubjectManagement />)}
+      {page === 'admin-parents' && renderAdminRoute(<ParentManagement />)}
+      {page === 'admin-student-assignment' && renderAdminRoute(<StudentClassAssignment />)}
+      {isLoggedIn && page === 'teacher-panel' && <TeacherPanel />}
     </div>
   )
 }

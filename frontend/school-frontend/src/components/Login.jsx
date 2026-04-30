@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import authService from "../services/authService";
 
-const Login = ({ onLoginSuccess, onGoRegister }) => {
+const Login = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -68,11 +68,9 @@ const Login = ({ onLoginSuccess, onGoRegister }) => {
               </button>
             </form>
 
-            <div style={{ marginTop: 16 }}>
-              <button type="button" className="btn-secondary" onClick={onGoRegister}>
-                Create an account
-              </button>
-            </div>
+            <p style={{ marginTop: 16, color: "var(--secondary-600)", fontSize: 14 }}>
+              Accounts are provisioned by the school administration. Contact support if you need access.
+            </p>
           </div>
         </div>
       </section>

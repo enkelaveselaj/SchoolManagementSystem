@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Plus, Edit2, Trash2, Search, Filter, Check, X, AlertCircle, GraduationCap, Calendar, BookOpen, Mail, Phone } from 'lucide-react';
 import { studentAPI } from '../services/teacherStudentService';
 import schoolService from '../services/schoolService';
+import { adminAPI } from '../services/adminService';
 
 const StudentManagement = () => {
   const [students, setStudents] = useState([]);
@@ -11,24 +12,42 @@ const StudentManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+  const [assignmentStudent, setAssignmentStudent] = useState(null);
+  const [assignmentData, setAssignmentData] = useState({ classId: '', sectionId: '' });
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    username: '',
     email: '',
-    phone: '',
+    gender: '',
     dateOfBirth: '',
-    address: '',
-    classId: '',
-    sectionId: '',
-    enrollmentDate: new Date().toISOString().split('T')[0],
-    parentName: '',
-    parentPhone: '',
-    parentEmail: ''
+    password: ''
   });
   const [filterClass, setFilterClass] = useState('');
   const [filterSection, setFilterSection] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [errors, setErrors] = useState({});
+  const [studentParents, setStudentParents] = useState({});
+
+  const classOptions = classes.length
+    ? classes
+    : [
+        { id: '10', name: 'Class 10' },
+        { id: '11', name: 'Class 11' },
+        { id: '12', name: 'Class 12' }
+      ];
+
+  const sectionOptions = sections.length
+    ? sections
+    : [
+        { id: '10A', classId: '10', name: 'Section A' },
+        { id: '10B', classId: '10', name: 'Section B' },
+        { id: '11A', classId: '11', name: 'Section A' },
+        { id: '11B', classId: '11', name: 'Section B' },
+        { id: '12A', classId: '12', name: 'Section A' },
+        { id: '12B', classId: '12', name: 'Section B' }
+      ];
 
   useEffect(() => {
     loadData();
@@ -38,7 +57,7 @@ const StudentManagement = () => {
     try {
       setLoading(true);
       
-      const [studentsData, classesData, sectionsData] = await Promise.all([
+      const [studentsData, classesData, sectionsData, parentsData] = await Promise.all([
         studentAPI.getAllStudents().catch(err => {
           console.error('Error fetching students:', err);
           return [];
@@ -50,12 +69,31 @@ const StudentManagement = () => {
         schoolService.getAllSections().catch(err => {
           console.error('Error fetching sections:', err);
           return [];
+        }),
+        adminAPI.getParents().catch(err => {
+          console.error('Error fetching parents:', err);
+          return [];
         })
       ]);
       
       setStudents(studentsData);
       setClasses(classesData);
       setSections(sectionsData);
+
+      const parentMap = {};
+      (parentsData || []).forEach((parent) => {
+        const parentName = `${parent.first_name || parent.firstName || ''} ${parent.last_name || parent.lastName || ''}`.trim();
+        (parent.students || []).forEach((student) => {
+          const studentId = Number(student.id);
+          if (!parentMap[studentId]) {
+            parentMap[studentId] = [];
+          }
+          if (!parentMap[studentId].includes(parentName) && parentName) {
+            parentMap[studentId].push(parentName);
+          }
+        });
+      });
+      setStudentParents(parentMap);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -74,30 +112,26 @@ const StudentManagement = () => {
       newErrors.lastName = 'Last name is required';
     }
     
+    if (!formData.username || formData.username.trim() === '') {
+      newErrors.username = 'Username is required';
+    }
+
     if (!formData.email || formData.email.trim() === '') {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Invalid email format';
     }
-    
+
     if (!formData.dateOfBirth) {
       newErrors.dateOfBirth = 'Date of birth is required';
     }
-    
-    if (!formData.classId) {
-      newErrors.classId = 'Class is required';
+
+    if (!formData.gender) {
+      newErrors.gender = 'Gender is required';
     }
-    
-    if (!formData.sectionId) {
-      newErrors.sectionId = 'Section is required';
-    }
-    
-    if (!formData.parentName || formData.parentName.trim() === '') {
-      newErrors.parentName = 'Parent name is required';
-    }
-    
-    if (!formData.parentPhone || formData.parentPhone.trim() === '') {
-      newErrors.parentPhone = 'Parent phone is required';
+
+    if (!formData.password || formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
     }
     
     setErrors(newErrors);
@@ -115,17 +149,9 @@ const StudentManagement = () => {
       setSubmitting(true);
       
       if (editingStudent) {
-        await studentAPI.updateStudent(editingStudent.id, {
-          ...formData,
-          classId: parseInt(formData.classId),
-          sectionId: parseInt(formData.sectionId)
-        });
+        await studentAPI.updateStudent(editingStudent.id, formData);
       } else {
-        await studentAPI.createStudent({
-          ...formData,
-          classId: parseInt(formData.classId),
-          sectionId: parseInt(formData.sectionId)
-        });
+        await studentAPI.createStudent(formData);
       }
       
       await loadData();
@@ -144,16 +170,11 @@ const StudentManagement = () => {
     setFormData({
       firstName: student.firstName,
       lastName: student.lastName,
+      username: student.username || '',
       email: student.email,
-      phone: student.phone || '',
+      gender: student.gender || '',
       dateOfBirth: student.dateOfBirth,
-      address: student.address || '',
-      classId: student.classId?.toString() || '',
-      sectionId: student.sectionId?.toString() || '',
-      enrollmentDate: student.enrollmentDate,
-      parentName: student.parentName,
-      parentPhone: student.parentPhone,
-      parentEmail: student.parentEmail || ''
+      password: ''
     });
     setShowForm(true);
   };
@@ -174,19 +195,45 @@ const StudentManagement = () => {
     setFormData({
       firstName: '',
       lastName: '',
+      username: '',
       email: '',
-      phone: '',
+      gender: '',
       dateOfBirth: '',
-      address: '',
-      classId: '',
-      sectionId: '',
-      enrollmentDate: new Date().toISOString().split('T')[0],
-      parentName: '',
-      parentPhone: '',
-      parentEmail: ''
+      password: ''
     });
     setErrors({});
     setEditingStudent(null);
+  };
+
+  const openAssignmentModal = (student) => {
+    setAssignmentStudent(student);
+    setAssignmentData({
+      classId: student.classId?.toString() || '',
+      sectionId: student.sectionId?.toString() || ''
+    });
+    setShowAssignmentModal(true);
+  };
+
+  const handleAssignmentSubmit = async (e) => {
+    e.preventDefault();
+    if (!assignmentStudent) return;
+
+    try {
+      setSubmitting(true);
+      await studentAPI.updateStudent(assignmentStudent.id, {
+        ...assignmentStudent,
+        classId: assignmentData.classId ? parseInt(assignmentData.classId, 10) : null,
+        sectionId: assignmentData.sectionId ? parseInt(assignmentData.sectionId, 10) : null
+      });
+      await loadData();
+      setShowAssignmentModal(false);
+      setAssignmentStudent(null);
+    } catch (error) {
+      console.error('Error assigning student:', error);
+      alert('Failed to update assignment. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const filteredStudents = students.filter(student => {
@@ -200,13 +247,13 @@ const StudentManagement = () => {
 
   const getClassName = (classId) => {
     if (!classId) return 'No Class';
-    const classItem = classes.find(cls => cls.id === classId);
+    const classItem = classOptions.find(cls => cls.id?.toString() === classId?.toString());
     return classItem ? classItem.name : 'Unknown Class';
   };
 
   const getSectionName = (sectionId) => {
     if (!sectionId) return 'No Section';
-    const sectionItem = sections.find(sec => sec.id === sectionId);
+    const sectionItem = sectionOptions.find(sec => sec.id?.toString() === sectionId?.toString());
     return sectionItem ? sectionItem.name : 'Unknown Section';
   };
 
@@ -321,7 +368,7 @@ const StudentManagement = () => {
             }}
           >
             <option value="">All Classes</option>
-            {classes.map(cls => (
+            {classOptions.map(cls => (
               <option key={cls.id} value={cls.id}>
                 {cls.name}
               </option>
@@ -344,7 +391,7 @@ const StudentManagement = () => {
             }}
           >
             <option value="">All Sections</option>
-            {sections.filter(section => !filterClass || section.classId === filterClass).map(section => (
+            {sectionOptions.filter(section => !filterClass || section.classId?.toString() === filterClass).map(section => (
               <option key={section.id} value={section.id}>
                 {section.name}
               </option>
@@ -585,6 +632,25 @@ const StudentManagement = () => {
                   >
                     <Trash2 size={16} />
                   </button>
+                  <button
+                    onClick={() => openAssignmentModal(student)}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'rgba(15, 118, 110, 0.1)',
+                      color: '#0f766e',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s ease'
+                    }}
+                    title="Assign class & section"
+                  >
+                    <Calendar size={16} />
+                  </button>
                 </div>
               </div>
               
@@ -646,8 +712,12 @@ const StudentManagement = () => {
                     display: 'flex',
                     justifyContent: 'space-between'
                   }}>
-                    <span style={{ color: '#718096', fontWeight: '500' }}>Parent</span>
-                    <span style={{ color: '#1a202c', fontWeight: '600' }}>{student.parentName || 'Not specified'}</span>
+                    <span style={{ color: '#718096', fontWeight: '500' }}>Parents</span>
+                    <span style={{ color: '#1a202c', fontWeight: '600', textAlign: 'right' }}>
+                      {studentParents[Number(student.id)]?.length
+                        ? studentParents[Number(student.id)].join(', ')
+                        : 'Not specified'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -779,6 +849,25 @@ const StudentManagement = () => {
                   )}
                 </div>
               </div>
+
+              <div className="form-group">
+                <label className="form-group__label">
+                  Username *
+                </label>
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  className={`form-group__input ${errors.username ? 'form-group__input--error' : ''}`}
+                  placeholder="e.g. jsmith25"
+                />
+                {errors.username && (
+                  <span className="form-group__error">
+                    <AlertCircle size={14} />
+                    {errors.username}
+                  </span>
+                )}
+              </div>
               
               <div className="form-group">
                 <label className="form-group__label">
@@ -802,20 +891,30 @@ const StudentManagement = () => {
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-group__label">
-                    Phone
+                    Gender *
                   </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="form-group__input"
-                    placeholder="+1 234 567 8900"
-                  />
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                    className={`form-group__input ${errors.gender ? 'form-group__input--error' : ''}`}
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="non-binary">Non-binary</option>
+                    <option value="prefer-not">Prefer not to say</option>
+                  </select>
+                  {errors.gender && (
+                    <span className="form-group__error">
+                      <AlertCircle size={14} />
+                      {errors.gender}
+                    </span>
+                  )}
                 </div>
                 
                 <div className="form-group">
                   <label className="form-group__label">
-                    Date of Birth *
+                    Birthday *
                   </label>
                   <input
                     type="date"
@@ -831,138 +930,29 @@ const StudentManagement = () => {
                   )}
                 </div>
               </div>
-              
+
               <div className="form-group">
                 <label className="form-group__label">
-                  Address
-                </label>
-                <textarea
-                  value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
-                  className="form-group__input"
-                  placeholder="Enter student address"
-                  rows={3}
-                />
-              </div>
-              
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-group__label">
-                    Class *
-                  </label>
-                  <select
-                    value={formData.classId}
-                    onChange={(e) => setFormData({...formData, classId: e.target.value})}
-                    className={`form-group__input ${errors.classId ? 'form-group__input--error' : ''}`}
-                  >
-                    <option value="">Select class</option>
-                    {classes.map(cls => (
-                      <option key={cls.id} value={cls.id}>
-                        {cls.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.classId && (
-                    <span className="form-group__error">
-                      <AlertCircle size={14} />
-                      {errors.classId}
-                    </span>
-                  )}
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-group__label">
-                    Section *
-                  </label>
-                  <select
-                    value={formData.sectionId}
-                    onChange={(e) => setFormData({...formData, sectionId: e.target.value})}
-                    className={`form-group__input ${errors.sectionId ? 'form-group__input--error' : ''}`}
-                  >
-                    <option value="">Select section</option>
-                    {sections.map(sec => (
-                      <option key={sec.id} value={sec.id}>
-                        {sec.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.sectionId && (
-                    <span className="form-group__error">
-                      <AlertCircle size={14} />
-                      {errors.sectionId}
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="form-group">
-                <label className="form-group__label">
-                  Enrollment Date
+                  Password *
                 </label>
                 <input
-                  type="date"
-                  value={formData.enrollmentDate}
-                  onChange={(e) => setFormData({...formData, enrollmentDate: e.target.value})}
-                  className="form-group__input"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  className={`form-group__input ${errors.password ? 'form-group__input--error' : ''}`}
+                  placeholder="Temporary password"
                 />
-              </div>
-              
-              <div className="form-section-divider">
-                <h4>Parent/Guardian Information</h4>
-              </div>
-              
-              <div className="form-group">
-                <label className="form-group__label">
-                  Parent Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.parentName}
-                  onChange={(e) => setFormData({...formData, parentName: e.target.value})}
-                  className={`form-group__input ${errors.parentName ? 'form-group__input--error' : ''}`}
-                  placeholder="Parent/Guardian full name"
-                />
-                {errors.parentName && (
+                {errors.password && (
                   <span className="form-group__error">
                     <AlertCircle size={14} />
-                    {errors.parentName}
+                    {errors.password}
                   </span>
                 )}
               </div>
               
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-group__label">
-                    Parent Phone *
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.parentPhone}
-                    onChange={(e) => setFormData({...formData, parentPhone: e.target.value})}
-                    className={`form-group__input ${errors.parentPhone ? 'form-group__input--error' : ''}`}
-                    placeholder="+1 234 567 8900"
-                  />
-                  {errors.parentPhone && (
-                    <span className="form-group__error">
-                      <AlertCircle size={14} />
-                      {errors.parentPhone}
-                    </span>
-                  )}
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-group__label">
-                    Parent Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.parentEmail}
-                    onChange={(e) => setFormData({...formData, parentEmail: e.target.value})}
-                    className="form-group__input"
-                    placeholder="parent@example.com"
-                  />
-                </div>
-              </div>
+              <p className="form-hint">
+                Additional details (class, contacts, guardians) can be added after the initial account is created.
+              </p>
               
               <div className="modal__actions">
                 <button 
@@ -989,6 +979,70 @@ const StudentManagement = () => {
                       {editingStudent ? 'Update Student' : 'Create Student'}
                     </>
                   )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showAssignmentModal && (
+        <div className="modal-overlay" onClick={() => setShowAssignmentModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal__header">
+              <h3>Assign Class & Section</h3>
+              <button className="modal__close" onClick={() => setShowAssignmentModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleAssignmentSubmit} className="modal__body">
+              <div className="form-group">
+                <label className="form-group__label">Class</label>
+                <select
+                  value={assignmentData.classId}
+                  onChange={(e) => {
+                    const newClassId = e.target.value;
+                    setAssignmentData({
+                      classId: newClassId,
+                      sectionId: ''
+                    });
+                  }}
+                  className="form-group__input"
+                >
+                  <option value="">Select class</option>
+                  {classOptions.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-group__label">Section</label>
+                <select
+                  value={assignmentData.sectionId}
+                  onChange={(e) => setAssignmentData({ ...assignmentData, sectionId: e.target.value })}
+                  className="form-group__input"
+                  disabled={!assignmentData.classId}
+                >
+                  <option value="">Select section</option>
+                  {sectionOptions
+                    .filter((sec) => !assignmentData.classId || sec.classId?.toString() === assignmentData.classId)
+                    .map((sec) => (
+                      <option key={sec.id} value={sec.id}>
+                        {sec.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="modal__actions">
+                <button type="button" className="btn btn--secondary" onClick={() => setShowAssignmentModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn--primary" disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save Assignment'}
                 </button>
               </div>
             </form>
