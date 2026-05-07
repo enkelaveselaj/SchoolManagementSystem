@@ -12,6 +12,7 @@ import FAQManagement from './components/FAQManagement'
 import AssessmentManagement from './components/teacher/AssessmentManagement'
 import GradeManagement from './components/teacher/GradeManagement'
 import TeacherPanel from './components/teacher/TeacherPanel'
+import StudentPanel from './components/student/StudentPanel'
 import StudentClassAssignment from './components/admin/StudentClassAssignment'
 import ParentManagement from './components/ParentManagement'
 import LandingHero from './components/landing/LandingHero'
@@ -19,11 +20,13 @@ import './styles.css'
 
 const App = () => {
   const [page, setPage] = useState(() => {
-    // Check for teacher panel in URL hash
     if (window.location.hash === '#teacher-panel') {
-      return 'teacher-panel';
+      return 'teacher-panel'
     }
-    return 'home';
+    if (window.location.hash === '#student-panel') {
+      return 'student-panel'
+    }
+    return 'home'
   })
   const [schoolData, setSchoolData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -42,16 +45,21 @@ const App = () => {
   const isLoggedIn = Boolean(auth?.token)
   const userRole = auth?.user?.role?.toLowerCase?.() || ''
   const isAdmin = isLoggedIn && (userRole === 'admin' || auth?.user?.is_super_admin)
+  const isTeacher = isLoggedIn && userRole === 'teacher'
+  const isStudent = isLoggedIn && userRole === 'student'
 
   useEffect(() => {
     fetchSchoolData()
   }, [])
 
   useEffect(() => {
-    if (!isLoggedIn && page === 'teacher-panel') {
-      setPage('login')
+    if (page === 'teacher-panel' && (!isLoggedIn || !isTeacher)) {
+      setPage(isLoggedIn ? 'home' : 'login')
     }
-  }, [isLoggedIn, page])
+    if (page === 'student-panel' && (!isLoggedIn || !isStudent)) {
+      setPage(isLoggedIn ? 'home' : 'login')
+    }
+  }, [isLoggedIn, isTeacher, isStudent, page])
 
   const fetchSchoolData = async () => {
     try {
@@ -156,7 +164,19 @@ const App = () => {
                 <span>Admin</span>
               </button>
             )}
-            {isLoggedIn && (
+            {isStudent && (
+              <button
+                onClick={() => setPage('student-panel')}
+                className={`nav-btn nav-btn-student ${page === 'student-panel' ? 'active' : ''}`}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 14l-9-5 9-5 9 5-9 5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4.5 12.5v4.5c0 2 7.5 5 7.5 5s7.5-3 7.5-5v-4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>Student</span>
+              </button>
+            )}
+            {isTeacher && (
               <button
                 onClick={() => setPage('teacher-panel')}
                 className={`nav-btn nav-btn-teacher ${page === 'teacher-panel' ? 'active' : ''}`}
@@ -674,7 +694,8 @@ const App = () => {
       {page === 'admin-subjects' && renderAdminRoute(<SubjectManagement />)}
       {page === 'admin-parents' && renderAdminRoute(<ParentManagement />)}
       {page === 'admin-student-assignment' && renderAdminRoute(<StudentClassAssignment />)}
-      {isLoggedIn && page === 'teacher-panel' && <TeacherPanel />}
+      {isStudent && page === 'student-panel' && <StudentPanel user={auth?.user} />}
+      {isTeacher && page === 'teacher-panel' && <TeacherPanel />}
     </div>
   )
 }

@@ -140,26 +140,38 @@ const StudentManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     try {
       setSubmitting(true);
-      
+
       if (editingStudent) {
         await studentAPI.updateStudent(editingStudent.id, formData);
       } else {
-        await studentAPI.createStudent(formData);
+        const authUser = await adminAPI.createUser({
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          role: 'Student'
+        });
+
+        const { password, ...studentPayload } = formData;
+        await studentAPI.createStudent({
+          ...studentPayload,
+          userId: authUser.id
+        });
       }
-      
+
       await loadData();
       resetForm();
       setShowForm(false);
     } catch (error) {
       console.error('Error saving student:', error);
-      alert('Failed to save student. Please try again.');
+      alert(error?.error || error?.message || 'Failed to save student. Please try again.');
     } finally {
       setSubmitting(false);
     }
