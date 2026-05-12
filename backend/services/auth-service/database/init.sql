@@ -1,8 +1,8 @@
 -- Create database if it doesn't exist
-CREATE DATABASE IF NOT EXISTS school_management;
+CREATE DATABASE IF NOT EXISTS auth_db;
 
 -- Use the database
-USE school_management;
+USE auth_db;
 
 -- Create roles table
 CREATE TABLE IF NOT EXISTS roles (
