@@ -13,6 +13,7 @@ import AssessmentManagement from './components/teacher/AssessmentManagement'
 import GradeManagement from './components/teacher/GradeManagement'
 import TeacherPanel from './components/teacher/TeacherPanel'
 import StudentPanel from './components/student/StudentPanel'
+import ParentPanel from './components/parent/ParentPanel'
 import StudentClassAssignment from './components/admin/StudentClassAssignment'
 import ParentManagement from './components/ParentManagement'
 import LandingHero from './components/landing/LandingHero'
@@ -25,6 +26,9 @@ const App = () => {
     }
     if (window.location.hash === '#student-panel') {
       return 'student-panel'
+    }
+    if (window.location.hash === '#parent-panel') {
+      return 'parent-panel'
     }
     return 'home'
   })
@@ -47,6 +51,7 @@ const App = () => {
   const isAdmin = isLoggedIn && (userRole === 'admin' || auth?.user?.is_super_admin)
   const isTeacher = isLoggedIn && userRole === 'teacher'
   const isStudent = isLoggedIn && userRole === 'student'
+  const isParent = isLoggedIn && userRole === 'parent'
 
   useEffect(() => {
     fetchSchoolData()
@@ -59,7 +64,10 @@ const App = () => {
     if (page === 'student-panel' && (!isLoggedIn || !isStudent)) {
       setPage(isLoggedIn ? 'home' : 'login')
     }
-  }, [isLoggedIn, isTeacher, isStudent, page])
+    if (page === 'parent-panel' && (!isLoggedIn || !isParent)) {
+      setPage(isLoggedIn ? 'home' : 'login')
+    }
+  }, [isLoggedIn, isTeacher, isStudent, isParent, page])
 
   const fetchSchoolData = async () => {
     try {
@@ -187,6 +195,20 @@ const App = () => {
                 <span>Teacher</span>
               </button>
             )}
+            {isParent && (
+              <button
+                onClick={() => setPage('parent-panel')}
+                className={`nav-btn nav-btn-parent ${page === 'parent-panel' ? 'active' : ''}`}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>Parent</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -209,7 +231,20 @@ const App = () => {
       localStorage.setItem('auth_user', JSON.stringify(user))
     }
     setAuth({ token, user })
-    setPage('home')
+    
+    // Redirect based on user role
+    const userRole = user?.role?.toLowerCase?.() || ''
+    if (userRole === 'admin') {
+      setPage('admin')
+    } else if (userRole === 'teacher') {
+      setPage('teacher-panel')
+    } else if (userRole === 'student') {
+      setPage('student-panel')
+    } else if (userRole === 'parent') {
+      setPage('parent-panel')
+    } else {
+      setPage('home')
+    }
   }
 
   const renderAdminRoute = (component) => {
@@ -696,6 +731,7 @@ const App = () => {
       {page === 'admin-student-assignment' && renderAdminRoute(<StudentClassAssignment />)}
       {isStudent && page === 'student-panel' && <StudentPanel user={auth?.user} />}
       {isTeacher && page === 'teacher-panel' && <TeacherPanel />}
+      {isParent && page === 'parent-panel' && <ParentPanel />}
     </div>
   )
 }

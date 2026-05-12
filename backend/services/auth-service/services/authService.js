@@ -7,6 +7,7 @@ import {
 } from "../repositories/userRepository.js";
 import { findRoleIdByName, findRoleNamesByUserId } from "../repositories/roleRepository.js";
 import { assignRoleToUser } from "../repositories/userRoleRepository.js";
+import { countStudentsForParent } from "../repositories/parentStudentRepository.js";
 
 export const registerUser = async (data) => {
   const { first_name, last_name, email, password } = data;
@@ -65,6 +66,14 @@ export const loginUser = async (data) => {
 
   const roleNames = await findRoleNamesByUserId(user.id);
   const role = roleNames[0];
+
+  // Check if parent is assigned to any students
+  if (role === "Parent") {
+    const studentCount = await countStudentsForParent({ parentId: user.id });
+    if (studentCount === 0) {
+      throw new Error("You are not assigned to any students yet. Please contact the administrator to be assigned to your children.");
+    }
+  }
 
   const token = jwt.sign(
     {

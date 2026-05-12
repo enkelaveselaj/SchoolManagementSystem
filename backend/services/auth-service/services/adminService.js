@@ -147,3 +147,88 @@ export const assignParentToStudents = async ({ parentId, studentIds }, currentUs
     removed: toRemove.length,
   };
 };
+
+export const createTeacher = async (data, currentUser) => {
+  const { firstName, lastName, email, password, phone, specialization, qualification, experience, hireDate, employeeId, emergencyContact, emergencyPhone } = data;
+
+  ensureAdmin(currentUser);
+
+  const existing = await findUserByEmail(email);
+
+  if (existing.length > 0) {
+    throw new Error("User with this email already exists");
+  }
+
+  const password_hash = await bcrypt.hash(password, 10);
+
+  const userId = await createUserRow({
+    first_name: firstName,
+    last_name: lastName,
+    email,
+    password_hash,
+  });
+
+  const roleId = await findRoleIdByName("Teacher");
+
+  if (!roleId) {
+    throw new Error("Teacher role not found");
+  }
+
+  await assignRoleToUser({ userId, roleId });
+
+  // Create teacher record in teacher-student service
+  try {
+    const teacherResponse = await fetch(`http://localhost:5004/teachers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        phone,
+        specialization,
+        qualification,
+        experience: experience ? parseInt(experience) : null,
+        hireDate,
+        employeeId,
+        emergencyContact,
+        emergencyPhone,
+        userId // Link to auth user
+      }),
+    });
+
+    if (!teacherResponse.ok) {
+      throw new Error('Failed to create teacher record in teacher service');
+    }
+
+    const teacherRecord = await teacherResponse.json();
+
+    return {
+      id: userId,
+      userId,
+      teacherId: teacherRecord.id,
+      firstName,
+      lastName,
+      email,
+      role: "Teacher",
+      specialization,
+      qualification,
+      employeeId,
+    };
+  } catch (error) {
+    // If teacher service fails, we should clean up the auth user
+    // For now, just throw the error
+    throw new Error(`Failed to create teacher: ${error.message}`);
+  }
+};
+
+export const getParentChildren = async (currentUser) => {
+  if (!currentUser || currentUser.role !== "Parent") {
+    throw new Error("Only parents can access their children's information");
+  }
+
+  const children = await findStudentsByParentId(currentUser.id);
+  return children;
+};

@@ -21,6 +21,16 @@ export const authService = {
     });
     return response.data;
   },
+
+  createTeacher: async (teacherData) => {
+    const token = localStorage.getItem('access_token');
+    const response = await axios.post(`${AUTH_API_BASE_URL}/admin/create-teacher`, teacherData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  },
 };
 
 export default authService;

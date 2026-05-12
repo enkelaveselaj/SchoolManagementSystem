@@ -44,3 +44,12 @@ export const countParentsForStudent = async ({ studentId }) => {
 
   return rows[0]?.total ?? 0;
 };
+
+export const countStudentsForParent = async ({ parentId }) => {
+  const [rows] = await db.query(
+    `SELECT COUNT(*) AS total FROM parent_students WHERE parent_id = ?`,
+    [parentId]
+  );
+
+  return rows[0]?.total ?? 0;
+};

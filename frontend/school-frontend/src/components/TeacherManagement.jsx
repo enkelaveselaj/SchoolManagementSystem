@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Plus, Edit2, Trash2, Search, Filter, Check, X, AlertCircle, GraduationCap, Calendar, BookOpen, Mail, Phone, Award } from 'lucide-react';
 import { teacherAPI } from '../services/teacherStudentService';
 import schoolService from '../services/schoolService';
+import authService from '../services/authService';
 
 const TeacherManagement = () => {
   const [teachers, setTeachers] = useState([]);
@@ -14,6 +15,7 @@ const TeacherManagement = () => {
     firstName: '',
     lastName: '',
     email: '',
+    password: '',
     phone: '',
     dateOfBirth: '',
     address: '',
@@ -67,6 +69,12 @@ const TeacherManagement = () => {
       newErrors.email = 'Invalid email format';
     }
     
+    if (!editingTeacher && (!formData.password || formData.password.trim() === '')) {
+      newErrors.password = 'Password is required for new teachers';
+    } else if (!editingTeacher && formData.password && formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    
     if (!formData.specialization || formData.specialization.trim() === '') {
       newErrors.specialization = 'Specialization is required';
     }
@@ -105,16 +113,33 @@ const TeacherManagement = () => {
     try {
       setSubmitting(true);
       
-      const teacherData = {
-        ...formData,
-        salary: formData.salary ? parseFloat(formData.salary) : null,
-        experience: formData.experience ? parseInt(formData.experience) : null
-      };
-      
       if (editingTeacher) {
+        // For editing, just update the teacher record in teacher-student service
+        const teacherData = {
+          ...formData,
+          salary: formData.salary ? parseFloat(formData.salary) : null,
+          experience: formData.experience ? parseInt(formData.experience) : null
+        };
         await teacherAPI.updateTeacher(editingTeacher.id, teacherData);
       } else {
-        await teacherAPI.createTeacher(teacherData);
+        // For new teachers, create both auth user and teacher record
+        const teacherData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          specialization: formData.specialization,
+          qualification: formData.qualification,
+          experience: formData.experience ? parseInt(formData.experience) : null,
+          hireDate: formData.hireDate,
+          salary: formData.salary ? parseFloat(formData.salary) : null,
+          employeeId: formData.employeeId,
+          emergencyContact: formData.emergencyContact,
+          emergencyPhone: formData.emergencyPhone
+        };
+        
+        await authService.createTeacher(teacherData);
       }
       
       await loadData();
@@ -122,7 +147,7 @@ const TeacherManagement = () => {
       setShowForm(false);
     } catch (error) {
       console.error('Error saving teacher:', error);
-      alert('Failed to save teacher. Please try again.');
+      alert(`Failed to save teacher: ${error.message || 'Please try again.'}`);
     } finally {
       setSubmitting(false);
     }
@@ -166,6 +191,7 @@ const TeacherManagement = () => {
       firstName: '',
       lastName: '',
       email: '',
+      password: '',
       phone: '',
       dateOfBirth: '',
       address: '',
@@ -769,6 +795,27 @@ const TeacherManagement = () => {
                   </span>
                 )}
               </div>
+              
+              {!editingTeacher && (
+                <div className="form-group">
+                  <label className="form-group__label">
+                    Password *
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    className={`form-group__input ${errors.password ? 'form-group__input--error' : ''}`}
+                    placeholder="Enter password (min 6 characters)"
+                  />
+                  {errors.password && (
+                    <span className="form-group__error">
+                      <AlertCircle size={14} />
+                      {errors.password}
+                    </span>
+                  )}
+                </div>
+              )}
               
               <div className="form-row">
                 <div className="form-group">
