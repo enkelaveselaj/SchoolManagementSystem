@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar, BookOpen, Clock, Award, Users, Mail, Phone, Shield, MapPin, Activity, Calculator } from 'lucide-react';
+import { Calendar, BookOpen, Clock, Award, Users, Mail, Phone, Shield, MapPin, Activity, Calculator, MessageCircle, Bell } from 'lucide-react';
 import { studentAPI } from '../../services/teacherStudentService';
 import schoolService from '../../services/schoolService';
 import academicService from '../../services/academicService';
 import attendanceService from '../../services/attendanceService';
+import StudentChat from './StudentChat';
+import messagingService from '../../services/messagingService';
 
 const cardShadow = '0 30px 60px -35px rgba(15, 23, 42, 0.35)';
 
 const StudentPanel = ({ user }) => {
+  const [page, setPage] = useState('overview');
   const [student, setStudent] = useState(null);
   const [classes, setClasses] = useState([]);
   const [sections, setSections] = useState([]);
@@ -18,6 +21,13 @@ const StudentPanel = ({ user }) => {
   const [todaysSchedule, setTodaysSchedule] = useState([]);
   const [upcomingAssessments, setUpcomingAssessments] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+
+  const navigation = [
+    { id: 'overview', name: 'Overview', icon: Users, description: 'View your dashboard' },
+    { id: 'chat', name: 'Chat', icon: MessageCircle, description: 'Message teachers' },
+    { id: 'notifications', name: 'Notifications', icon: Bell, description: 'View announcements' }
+  ];
 
   useEffect(() => {
     if (!user?.email) {
@@ -70,17 +80,21 @@ const StudentPanel = ({ user }) => {
       try {
         setContextLoading(true);
 
-        const [attendanceResponse, timetables, assessmentsResponse, subjectsResponse] = await Promise.all([
+        const [attendanceResponse, timetables, assessmentsResponse, subjectsResponse, notificationsResponse] = await Promise.all([
           attendanceService.getStudentAttendanceStats(student.id).catch(() => null),
           academicService.getAllTimetables().catch(() => []),
           academicService.getAllAssessments().catch(() => []),
-          academicService.getAllSubjects().catch(() => [])
+          academicService.getAllSubjects().catch(() => []),
+          messagingService.getNotifications(user.email).catch(() => [])
         ]);
 
         setSubjects(subjectsResponse || []);
 
         const attendanceData = attendanceResponse?.data || attendanceResponse || null;
         setAttendanceStats(attendanceData);
+
+        const notificationsData = notificationsResponse?.data || notificationsResponse || [];
+        setNotifications(notificationsData);
 
         const today = new Date();
         const weekday = today.toLocaleDateString('en-US', { weekday: 'long' });
@@ -249,13 +263,49 @@ const StudentPanel = ({ user }) => {
           </div>
         </header>
 
-        <section style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 320px',
-          gap: '32px',
-          alignItems: 'start'
+        {/* Tab Navigation */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '32px',
+          borderBottom: '1px solid rgba(226, 232, 240, 0.7)',
+          paddingBottom: '16px'
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {navigation.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setPage(item.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 20px',
+                borderRadius: '12px',
+                border: 'none',
+                background: page === item.id ? '#6366f1' : 'rgba(255, 255, 255, 0.8)',
+                color: page === item.id ? '#ffffff' : '#475569',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: page === item.id ? '0 4px 12px rgba(99, 102, 241, 0.3)' : 'none'
+              }}
+            >
+              <item.icon size={18} />
+              {item.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Page Content */}
+        <>
+          {page === 'overview' && (
+          <section style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) 320px',
+            gap: '32px',
+            alignItems: 'start'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <article style={{
               background: 'white',
               borderRadius: '28px',
@@ -461,6 +511,74 @@ const StudentPanel = ({ user }) => {
             </div>
           </aside>
         </section>
+        )}
+
+        {page === 'chat' && (
+          <div style={{
+            background: 'white',
+            borderRadius: '28px',
+            border: '1px solid rgba(226, 232, 240, 0.7)',
+            boxShadow: cardShadow,
+            height: '600px',
+            overflow: 'hidden'
+          }}>
+            <StudentChat user={user} student={student} />
+          </div>
+        )}
+
+        {page === 'notifications' && (
+          <div style={{
+            background: 'white',
+            borderRadius: '28px',
+            border: '1px solid rgba(226, 232, 240, 0.7)',
+            boxShadow: cardShadow,
+            padding: '28px'
+          }}>
+            <h2 style={{ margin: '0 0 24px', fontSize: 22 }}>Notifications</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {notifications.length === 0 && (
+                <div style={{
+                  padding: '20px',
+                  borderRadius: '18px',
+                  border: '1px dashed rgba(226, 232, 240, 0.9)',
+                  textAlign: 'center',
+                  color: '#94a3b8'
+                }}>
+                  No notifications yet.
+                </div>
+              )}
+              {notifications.map((notification) => (
+                <div key={notification._id} style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 16,
+                  padding: '16px',
+                  borderRadius: '18px',
+                  border: '1px solid rgba(226, 232, 240, 0.9)',
+                  background: notification.read ? 'rgba(248, 250, 252, 0.8)' : 'rgba(79, 70, 229, 0.05)',
+                  position: 'relative'
+                }}>
+                  <div style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: notification.read ? '#94a3b8' : '#6366f1',
+                    flexShrink: 0,
+                    marginTop: 6
+                  }} />
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ margin: 0, fontSize: 16, color: '#0f172a' }}>{notification.title}</h3>
+                    <p style={{ margin: '8px 0 0', fontSize: 14, color: '#475569' }}>{notification.message}</p>
+                    <div style={{ marginTop: 8, fontSize: 12, color: '#94a3b8' }}>
+                      {new Date(notification.createdAt).toLocaleDateString()} • {notification.type}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        </>
       </div>
     </div>
   );

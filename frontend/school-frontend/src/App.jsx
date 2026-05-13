@@ -149,6 +149,22 @@ const App = () => {
               </button>
             )}
 
+            {isStudent && (
+              <button
+                onClick={() => setPage('student-panel')}
+                className={`nav-btn ${page === 'student-panel' ? 'active' : ''}`}
+              >
+                Student
+              </button>
+            )}
+            {isTeacher && (
+              <button
+                onClick={() => setPage('teacher-panel')}
+                className={`nav-btn ${page === 'teacher-panel' ? 'active' : ''}`}
+              >
+                Teacher
+              </button>
+            )}
             {isAdmin && (
               <button
                 onClick={() => setPage('admin-panel')}
@@ -179,7 +195,9 @@ const App = () => {
     setAuth({ token, user })
 
     const role = user?.role?.toLowerCase?.() || ''
-    if (role === 'parent') setPage('parent-panel')
+    if (role === 'student') setPage('student-panel')
+    else if (role === 'teacher') setPage('teacher-panel')
+    else if (role === 'parent') setPage('parent-panel')
     else if (role === 'admin') setPage('admin-panel')
     else setPage('home')
   }

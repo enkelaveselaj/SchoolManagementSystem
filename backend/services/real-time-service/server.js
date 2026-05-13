@@ -2,9 +2,12 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const Stripe = require('stripe');
 const { sequelize } = require('./src/models');
 const paymentRoutes = require('./src/routes/paymentRoutes');
+const messageRoutes = require('./src/routes/messages');
+const notificationRoutes = require('./src/routes/notifications');
 const paymentService = require('./src/services/paymentService');
 
 const app = express();
@@ -55,16 +58,25 @@ app.post(
 // NOW express.json()
 app.use(express.json());
 app.use('/', paymentRoutes);
+app.use('/messages', messageRoutes);
+app.use('/notifications', notificationRoutes);
+
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/school_messaging';
 
 const startServer = async () => {
   try {
+    // Connect to MongoDB
+    await mongoose.connect(mongoUri);
+    console.log('Connected to MongoDB');
+
+    // Connect to MySQL
     await sequelize.authenticate();
     await sequelize.sync({ alter: true });
-    console.log('Database connected and synced successfully.');
+    console.log('MySQL database connected and synced successfully.');
 
     const port = process.env.PORT || 5005;
     app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
+      console.log(`Real-time service running on port ${port}`);
     });
   } catch (err) {
     console.error('Server startup failed:', err);
