@@ -1,5 +1,152 @@
 import React, { useState, useEffect } from 'react';
-import { Users, BookOpen, Calendar, TrendingUp, Award, Clock, LogOut, Menu, X, GraduationCap, FileText, BarChart3, UserCheck, Mail, Phone, AlertCircle } from 'lucide-react';
+import {
+  Users,
+  FileText,
+  BarChart3,
+  UserCheck,
+  LogOut,
+  Menu,
+  X,
+  AlertCircle
+} from 'lucide-react';
+
+import paymentService from '../../services/paymentService';
+import { loadStripe } from '@stripe/stripe-js';
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements
+} from '@stripe/react-stripe-js';
+
+const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_YOUR_PUBLISHABLE_KEY'
+);
+const STRIPE_API_URL =
+  import.meta.env.VITE_STRIPE_API_URL || 'http://localhost:5005';
+
+/* ---------------- PAYMENT COMPONENT ---------------- */
+
+const PaymentForm = ({ customerEmail, onPaymentSuccess }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+
+  const [amount, setAmount] = useState(10); // dollars
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handlePay = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    const amountValue = Number(amount) || 0;
+    if (amountValue <= 0) {
+      setMessage("Enter an amount greater than $0.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // 1. create payment intent
+      const res = await fetch(`${STRIPE_API_URL}/create-payment-intent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: Math.round(amountValue * 100),
+          customerEmail,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Unable to create payment intent.");
+      }
+
+      // 2. confirm card payment
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        throw new Error('Card details are not loaded. Please refresh the page.');
+      }
+
+      const result = await stripe.confirmCardPayment(data.clientSecret, {
+        payment_method: {
+          card: cardElement,
+        },
+      });
+
+      if (result.error) {
+        const status = result.paymentIntent?.status;
+        const detail = result.error.message || 'Payment method error';
+        setMessage(
+          `${detail}${status ? ` (status: ${status})` : ''}`
+        );
+      } else if (result.paymentIntent?.status === "succeeded") {
+        setMessage("Payment successful ✅");
+        await paymentService.updatePaymentStatus({
+          stripePaymentIntentId: result.paymentIntent.id,
+          status: 'succeeded',
+          paidAt: new Date().toISOString(),
+        });
+        onPaymentSuccess?.();
+      } else {
+        setMessage(
+          `Payment status: ${result.paymentIntent?.status || 'unknown'}`
+        );
+      }
+    } catch (err) {
+      setMessage(err?.message || "Payment failed ❌");
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 500 }}>
+      <h2 style={{ marginBottom: 20 }}>School Payment</h2>
+
+      <form onSubmit={handlePay}>
+        <label>Amount ($)</label>
+        <input
+          type="number"
+          min="1"
+          value={amount}
+          onChange={(e) => setAmount(Number(e.target.value))}
+          style={{ width: "100%", padding: 10, margin: "10px 0" }}
+        />
+
+        <div style={{
+          padding: 12,
+          border: "1px solid #ddd",
+          borderRadius: 8,
+          marginBottom: 20
+        }}>
+          <CardElement />
+        </div>
+
+        <button
+          disabled={!stripe || loading}
+          style={{
+            width: "100%",
+            padding: 12,
+            background: "black",
+            color: "white",
+            border: "none",
+            borderRadius: 8
+          }}
+        >
+          {loading ? "Processing..." : "Pay Now"}
+        </button>
+      </form>
+
+      {message && (
+        <p style={{ marginTop: 15 }}>{message}</p>
+      )}
+    </div>
+  );
+};
+
+/* ---------------- MAIN PANEL ---------------- */
 
 const ParentPanel = () => {
   const [page, setPage] = useState('overview');
@@ -7,51 +154,52 @@ const ParentPanel = () => {
   const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [payments, setPayments] = useState([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentsError, setPaymentsError] = useState('');
 
   const navigation = [
-    { 
-      id: 'overview', 
-      name: 'Overview', 
-      icon: Users,
-      description: 'View children overview'
-    },
-    { 
-      id: 'grades', 
-      name: 'Grades', 
-      icon: BarChart3,
-      description: 'View academic performance'
-    },
-    { 
-      id: 'attendance', 
-      name: 'Attendance', 
-      icon: UserCheck,
-      description: 'Track attendance records'
-    },
-    { 
-      id: 'assignments', 
-      name: 'Assignments', 
-      icon: FileText,
-      description: 'View homework and assignments'
-    }
+    { id: 'overview', name: 'Overview', icon: Users, description: 'View children overview' },
+    { id: 'grades', name: 'Grades', icon: BarChart3, description: 'View academic performance' },
+    { id: 'attendance', name: 'Attendance', icon: UserCheck, description: 'Track attendance records' },
+    { id: 'assignments', name: 'Assignments', icon: FileText, description: 'View homework' },
+    { id: 'payments', name: 'Payments', icon: FileText, description: 'Pay school fees' }
   ];
+
+  const authUser = JSON.parse(localStorage.getItem('auth_user') || 'null');
+
+  const paymentStats = {
+    total: payments.length,
+    succeeded: payments.filter((payment) => payment.status === 'succeeded').length,
+    failed: payments.filter((payment) => payment.status === 'failed').length,
+    pending: payments.filter((payment) => payment.status === 'requires_payment_method').length,
+  };
 
   useEffect(() => {
     fetchChildren();
   }, []);
 
+  useEffect(() => {
+    if (page === 'payments') {
+      fetchPayments();
+    }
+  }, [page]);
+
   const fetchChildren = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:5001/admin/parents/me/children', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch children data');
-      }
+      const response = await fetch(
+        'http://localhost:5001/admin/parents/me/children',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to fetch children');
 
       const data = await response.json();
       setChildren(data);
@@ -59,6 +207,23 @@ const ParentPanel = () => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      setPaymentsLoading(true);
+      setPaymentsError('');
+
+      const response = await paymentService.getPayments({
+        customerEmail: authUser?.email,
+      });
+
+      setPayments(response);
+    } catch (err) {
+      setPaymentsError(err?.error || err?.message || 'Failed to load payments.');
+    } finally {
+      setPaymentsLoading(false);
     }
   };
 
@@ -70,330 +235,159 @@ const ParentPanel = () => {
 
   const renderPage = () => {
     if (loading) {
-      return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-          <div className="loading">
-            <div className="spinner"></div>
-            <p>Loading your children's information...</p>
-          </div>
-        </div>
-      );
+      return <div className="panel-empty">Loading parent dashboard...</div>;
     }
 
     if (error) {
       return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-          <div style={{ textAlign: 'center', color: '#ef4444' }}>
-            <AlertCircle size={48} style={{ marginBottom: '16px' }} />
-            <h3>Error Loading Data</h3>
-            <p>{error}</p>
-          </div>
+        <div className="panel-empty panel-empty--error">
+          <AlertCircle size={24} />
+          <p>{error}</p>
         </div>
       );
     }
 
-    switch(page) {
+    switch (page) {
+
+      case 'payments':
+        return (
+          <div className="panel-content">
+            <div className="panel-top">
+              <div>
+                <p className="panel-subtitle">Payments</p>
+                <h2 className="panel-title">School fee management</h2>
+                <p className="panel-copy">Quickly pay outstanding fees and review your payment history.</p>
+              </div>
+              <div className="stats-grid">
+                <div className="dashboard-stat-card">
+                  <span className="dashboard-stat-label">Total payments</span>
+                  <strong>{paymentStats.total}</strong>
+                </div>
+                <div className="dashboard-stat-card">
+                  <span className="dashboard-stat-label">Success</span>
+                  <strong>{paymentStats.succeeded}</strong>
+                </div>
+                <div className="dashboard-stat-card">
+                  <span className="dashboard-stat-label">Pending</span>
+                  <strong>{paymentStats.pending}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="panel-grid">
+              <div className="panel-card">
+                <h3>Make a payment</h3>
+                <Elements stripe={stripePromise}>
+                  <PaymentForm
+                    customerEmail={authUser?.email}
+                    onPaymentSuccess={fetchPayments}
+                  />
+                </Elements>
+              </div>
+
+              <div className="panel-card">
+                <h3>Payment history</h3>
+
+                {paymentsLoading ? (
+                  <p>Loading payment history...</p>
+                ) : paymentsError ? (
+                  <p className="panel-error">{paymentsError}</p>
+                ) : payments.length === 0 ? (
+                  <p>No payments have been recorded yet.</p>
+                ) : (
+                  <div className="history-list">
+                    {payments.map((payment) => (
+                      <div key={payment.id} className="history-card">
+                        <div className="history-card__main">
+                          <div>
+                            <strong>${(payment.amount / 100).toFixed(2)}</strong>
+                            <p>{new Date(payment.createdAt || payment.created_at).toLocaleString()}</p>
+                          </div>
+                          <span className={`status-pill status-pill--${payment.status.replace(/_/g, '-')}`}>
+                            {payment.status.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                        {payment.customerEmail && (
+                          <p className="history-card__meta">{payment.customerEmail}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
       case 'overview':
         return (
-          <div style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '24px' }}>Your Children</h2>
-            {children.length === 0 ? (
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                borderRadius: '16px',
-                padding: '48px',
-                textAlign: 'center',
-                border: '1px solid rgba(226, 232, 240, 0.7)'
-              }}>
-                <Users size={64} style={{ marginBottom: '16px', color: '#94a3b8' }} />
-                <h3 style={{ color: '#475569', marginBottom: '8px' }}>No Children Found</h3>
-                <p style={{ color: '#94a3b8' }}>You don't have any children assigned to your account yet.</p>
+          <div className="panel-content">
+            <div className="panel-top">
+              <div>
+                <p className="panel-subtitle">Family overview</p>
+                <h2 className="panel-title">Your children</h2>
+                <p className="panel-copy">Track your children's progress and stay updated with school activity.</p>
               </div>
-            ) : (
-              <div style={{ display: 'grid', gap: '20px' }}>
-                {children.map((child) => (
-                  <div key={child.id} style={{
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    borderRadius: '16px',
-                    padding: '24px',
-                    border: '1px solid rgba(226, 232, 240, 0.7)',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                      <div>
-                        <h3 style={{ fontSize: '20px', fontWeight: '700', margin: '0 0 8px 0' }}>
-                          {child.first_name} {child.last_name}
-                        </h3>
-                        <p style={{ color: '#64748b', margin: 0 }}>{child.email}</p>
-                      </div>
-                      <div style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '18px',
-                        fontWeight: '700'
-                      }}>
-                        {child.first_name?.[0]}{child.last_name?.[0]}
-                      </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                      <div>
-                        <span style={{ color: '#94a3b8', fontSize: '14px' }}>Grade</span>
-                        <p style={{ fontWeight: '600', margin: '4px 0 0' }}>{child.grade || 'Not assigned'}</p>
-                      </div>
-                      <div>
-                        <span style={{ color: '#94a3b8', fontSize: '14px' }}>Section</span>
-                        <p style={{ fontWeight: '600', margin: '4px 0 0' }}>{child.section || 'Not assigned'}</p>
-                      </div>
-                      <div>
-                        <span style={{ color: '#94a3b8', fontSize: '14px' }}>Status</span>
-                        <p style={{ fontWeight: '600', margin: '4px 0 0' }}>
-                          <span style={{
-                            color: '#10b981',
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            fontSize: '12px'
-                          }}>
-                            Active
-                          </span>
-                        </p>
-                      </div>
-                    </div>
+            </div>
+
+            <div className="children-grid">
+              {children.map((child) => (
+                <div key={child.id} className="child-card">
+                  <div className="child-card__header">
+                    <Users size={20} />
+                    <strong>{child.first_name} {child.last_name}</strong>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      case 'grades':
-        return (
-          <div style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '24px' }}>Academic Performance</h2>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '16px',
-              padding: '48px',
-              textAlign: 'center',
-              border: '1px solid rgba(226, 232, 240, 0.7)'
-            }}>
-              <BarChart3 size={64} style={{ marginBottom: '16px', color: '#94a3b8' }} />
-              <h3 style={{ color: '#475569', marginBottom: '8px' }}>Grades Coming Soon</h3>
-              <p style={{ color: '#94a3b8' }}>Academic performance tracking will be available here.</p>
+                  <p>{child.email}</p>
+                </div>
+              ))}
             </div>
           </div>
         );
-      case 'attendance':
-        return (
-          <div style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '24px' }}>Attendance Records</h2>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '16px',
-              padding: '48px',
-              textAlign: 'center',
-              border: '1px solid rgba(226, 232, 240, 0.7)'
-            }}>
-              <UserCheck size={64} style={{ marginBottom: '16px', color: '#94a3b8' }} />
-              <h3 style={{ color: '#475569', marginBottom: '8px' }}>Attendance Coming Soon</h3>
-              <p style={{ color: '#94a3b8' }}>Attendance tracking will be available here.</p>
-            </div>
-          </div>
-        );
-      case 'assignments':
-        return (
-          <div style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '24px' }}>Assignments & Homework</h2>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '16px',
-              padding: '48px',
-              textAlign: 'center',
-              border: '1px solid rgba(226, 232, 240, 0.7)'
-            }}>
-              <FileText size={64} style={{ marginBottom: '16px', color: '#94a3b8' }} />
-              <h3 style={{ color: '#475569', marginBottom: '8px' }}>Assignments Coming Soon</h3>
-              <p style={{ color: '#94a3b8' }}>Homework and assignments will be available here.</p>
-            </div>
-          </div>
-        );
+
       default:
-        return null;
+        return <div className="panel-empty">Coming soon...</div>;
     }
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      display: 'flex'
-    }}>
-      {/* Sidebar */}
-      <div style={{
-        width: sidebarOpen ? '280px' : '80px',
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        borderRight: '1px solid rgba(255, 255, 255, 0.2)',
-        transition: 'width 0.3s ease',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Header */}
-        <div style={{
-          padding: '24px',
-          borderBottom: '1px solid rgba(226, 232, 240, 0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #667eea, #764ba2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white'
-            }}>
-              <Users size={20} />
+    <div className={`parent-panel ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      <aside className="panel-sidebar">
+        <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          {sidebarOpen ? <X /> : <Menu />}
+        </button>
+
+        <div className="sidebar-brand">
+          <div className="sidebar-brand__logo">P</div>
+          {sidebarOpen && (
+            <div>
+              <h3>Parent Panel</h3>
+              <p>Welcome back, {authUser?.email?.split('@')[0] || 'Parent'}</p>
             </div>
-            {sidebarOpen && (
-              <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#1a202c' }}>
-                  Parent Portal
-                </h3>
-                <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
-                  Manage your children
-                </p>
-              </div>
-            )}
-          </div>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '4px',
-              borderRadius: '6px',
-              color: '#64748b'
-            }}
-          >
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          )}
         </div>
 
-        {/* Navigation */}
-        <nav style={{ flex: 1, padding: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {navigation.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setPage(item.id)}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: sidebarOpen ? '12px' : '0',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: page === item.id ? 'rgba(102, 126, 234, 0.1)' : 'transparent',
-                  color: page === item.id ? '#667eea' : '#64748b',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  justifyContent: sidebarOpen ? 'flex-start' : 'center'
-                }}
-              >
-                <item.icon size={20} />
-                {sidebarOpen && (
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{item.name}</div>
-                    <div style={{ fontSize: '11px', opacity: 0.7 }}>{item.description}</div>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
+        <nav className="panel-nav">
+          {navigation.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setPage(item.id)}
+              className={`panel-nav__item ${page === item.id ? 'active' : ''}`}
+            >
+              <item.icon size={18} />
+              {sidebarOpen && <span>{item.name}</span>}
+            </button>
+          ))}
         </nav>
 
-        {/* Logout */}
-        <div style={{ padding: '16px', borderTop: '1px solid rgba(226, 232, 240, 0.7)' }}>
-          <button
-            onClick={handleLogout}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: sidebarOpen ? '12px' : '0',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              border: 'none',
-              background: 'rgba(239, 68, 68, 0.1)',
-              color: '#ef4444',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              justifyContent: sidebarOpen ? 'flex-start' : 'center'
-            }}
-          >
-            <LogOut size={20} />
-            {sidebarOpen && <span style={{ fontWeight: '600' }}>Logout</span>}
-          </button>
-        </div>
-      </div>
+        <button className="logout-button" onClick={handleLogout}>
+          <LogOut size={18} />
+          {sidebarOpen && <span>Logout</span>}
+        </button>
+      </aside>
 
-      {/* Main Content */}
-      <div style={{
-        flex: 1,
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        overflow: 'auto'
-      }}>
-        {/* Header */}
-        <div style={{
-          background: 'white',
-          padding: '24px 32px',
-          borderBottom: '1px solid rgba(226, 232, 240, 0.7)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '800', color: '#1a202c' }}>
-              {navigation.find(item => item.id === page)?.name || 'Parent Portal'}
-            </h1>
-            <p style={{ margin: '4px 0 0', color: '#64748b' }}>
-              {navigation.find(item => item.id === page)?.description || 'Manage your children\'s education'}
-            </p>
-          </div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <div style={{
-              padding: '8px 16px',
-              background: 'rgba(16, 185, 129, 0.1)',
-              color: '#10b981',
-              borderRadius: '20px',
-              fontSize: '12px',
-              fontWeight: '600'
-            }}>
-              {children.length} {children.length === 1 ? 'Child' : 'Children'}
-            </div>
-          </div>
-        </div>
-
-        {/* Page Content */}
+      <main className="panel-main">
         {renderPage()}
-      </div>
+      </main>
     </div>
   );
 };
