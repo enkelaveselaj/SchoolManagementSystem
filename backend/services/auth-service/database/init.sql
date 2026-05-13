@@ -9,62 +9,44 @@ CREATE TABLE IF NOT EXISTS roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    INDEX idx_role_name (name)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create users table
+-- Create users table (matching actual schema)
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    firstName VARCHAR(100) NOT NULL,
-    lastName VARCHAR(100) NOT NULL,
-    roleId INT NOT NULL,
-    isActive BOOLEAN DEFAULT TRUE,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_super_admin TINYINT(1) DEFAULT 0,
     
-    FOREIGN KEY (roleId) REFERENCES roles(id) ON DELETE RESTRICT,
-    INDEX idx_email (email),
-    INDEX idx_role (roleId),
-    INDEX idx_is_active (isActive)
+    INDEX idx_email (email)
 );
 
--- Create user_roles junction table (for future flexibility)
+-- Create user_roles junction table
 CREATE TABLE IF NOT EXISTS user_roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    userId INT NOT NULL,
-    roleId INT NOT NULL,
+    user_id INT,
+    role_id INT,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    assigned_by INT NULL,
     
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (roleId) REFERENCES roles(id) ON DELETE CASCADE,
-    FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL,
-    UNIQUE KEY uk_user_role (userId, roleId),
-    INDEX idx_user (userId),
-    INDEX idx_role (roleId)
+    INDEX idx_user_id (user_id),
+    INDEX idx_role_id (role_id)
 );
 
--- Create parent_students table for parent-student relationships
+-- Create parent_students table
 CREATE TABLE IF NOT EXISTS parent_students (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    parentId INT NOT NULL,
-    studentId INT NOT NULL,
-    relationship VARCHAR(50) DEFAULT 'Parent',
-    isPrimaryContact BOOLEAN DEFAULT FALSE,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    parent_id INT,
+    student_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (parentId) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (studentId) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY uk_parent_student (parentId, studentId),
-    INDEX idx_parent (parentId),
-    INDEX idx_student (studentId),
-    INDEX idx_primary_contact (isPrimaryContact)
+    INDEX idx_parent_id (parent_id),
+    INDEX idx_student_id (student_id)
 );
 
 -- Insert default roles
@@ -79,13 +61,18 @@ description = VALUES(description);
 
 -- Create default admin user (njomzap@gmail.com)
 -- Password: njomzap (hashed with bcrypt)
-INSERT INTO users (email, password, firstName, lastName, roleId, isActive) VALUES 
-('njomzap@gmail.com', '$2b$10$3rL9QDovEmRczhoj3N4CQ.rsSaeInQe9mkvXyqH5LAnE5wWtlM9P.', 'Admin', 'User', 1, TRUE)
+INSERT INTO users (first_name, last_name, email, password_hash) VALUES 
+('Admin', 'User', 'njomzap@gmail.com', '$2b$10$3rL9QDovEmRczhoj3N4CQ.rsSaeInQe9mkvXyqH5LAnE5wWtlM9P.')
 ON DUPLICATE KEY UPDATE 
-firstName = VALUES(firstName),
-lastName = VALUES(lastName),
-roleId = VALUES(roleId),
-isActive = VALUES(isActive);
+first_name = VALUES(first_name),
+last_name = VALUES(last_name);
 
--- Note: Replace $2b$10$YourHashedPasswordHere with the actual bcrypt hash of 'njomzap'
--- You can generate this using Node.js: bcrypt.hash('njomzap', 10)
+-- Assign admin role to default admin user
+INSERT INTO user_roles (user_id, role_id) 
+SELECT u.id, r.id 
+FROM users u 
+CROSS JOIN roles r 
+WHERE u.email = 'njomzap@gmail.com' AND r.name = 'Admin'
+ON DUPLICATE KEY UPDATE 
+user_id = VALUES(user_id),
+role_id = VALUES(role_id);
