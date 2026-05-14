@@ -10,6 +10,7 @@ const timetableRoutes = require("../routes/timetable");
 const assessmentRoutes = require("../routes/assessment");
 const gradeRoutes = require("../routes/grade");
 const assessmentScoreRoutes = require("../routes/assessmentScore");
+const announcementRoutes = require("../routes/announcements");
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use("/timetable", timetableRoutes);
 app.use("/assessments", assessmentRoutes );
 app.use("/grades", gradeRoutes);
 app.use("/assessment-scores", assessmentScoreRoutes);
+app.use("/announcements", announcementRoutes);
 
 const { Timetable, AssessmentScore } = require("./models");
 

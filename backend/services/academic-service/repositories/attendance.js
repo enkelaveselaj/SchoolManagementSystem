@@ -84,7 +84,11 @@ class AttendanceRepository {
     const stats = await Attendance.findAll({
       where: whereClause,
       attributes: [
-        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "excused" THEN 1 END')), 'excusedCount']
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "present" THEN 1 END')), 'presentCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "absent" THEN 1 END')), 'absentCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "late" THEN 1 END')), 'lateCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "excused" THEN 1 END')), 'excusedCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('1')), 'totalRecords']
       ],
       raw: true
     });
@@ -111,7 +115,11 @@ class AttendanceRepository {
     const stats = await Attendance.findAll({
       where: whereClause,
       attributes: [
-        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "excused" THEN 1 END')), 'excusedCount']
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "present" THEN 1 END')), 'presentCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "absent" THEN 1 END')), 'absentCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "late" THEN 1 END')), 'lateCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "excused" THEN 1 END')), 'excusedCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('1')), 'totalRecords']
       ],
       raw: true
     });
@@ -164,7 +172,11 @@ class AttendanceRepository {
         }
       },
       attributes: [
-        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "excused" THEN 1 END')), 'excusedCount']
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "present" THEN 1 END')), 'presentCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "absent" THEN 1 END')), 'absentCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "late" THEN 1 END')), 'lateCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('CASE WHEN status = "excused" THEN 1 END')), 'excusedCount'],
+        [require('sequelize').fn('COUNT', require('sequelize').literal('1')), 'totalRecords']
       ],
       raw: true
     });

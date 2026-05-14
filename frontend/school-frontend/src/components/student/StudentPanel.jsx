@@ -6,6 +6,7 @@ import academicService from '../../services/academicService';
 import attendanceService from '../../services/attendanceService';
 import StudentChat from './StudentChat';
 import messagingService from '../../services/messagingService';
+import { io } from 'socket.io-client';
 
 const cardShadow = '0 30px 60px -35px rgba(15, 23, 42, 0.35)';
 
@@ -22,6 +23,7 @@ const StudentPanel = ({ user }) => {
   const [upcomingAssessments, setUpcomingAssessments] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [socket, setSocket] = useState(null);
 
   const navigation = [
     { id: 'overview', name: 'Overview', icon: Users, description: 'View your dashboard' },
@@ -85,7 +87,7 @@ const StudentPanel = ({ user }) => {
           academicService.getAllTimetables().catch(() => []),
           academicService.getAllAssessments().catch(() => []),
           academicService.getAllSubjects().catch(() => []),
-          messagingService.getNotifications(user.email).catch(() => [])
+          messagingService.getNotifications({ email: user.email }).catch(() => [])
         ]);
 
         setSubjects(subjectsResponse || []);
@@ -143,10 +145,45 @@ const StudentPanel = ({ user }) => {
     loadStudentInsights();
   }, [student?.id]);
 
+  // Socket.IO connection for real-time notifications
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const socketConnection = io(import.meta.env.VITE_REALTIME_API_URL || 'http://localhost:5005');
+    setSocket(socketConnection);
+
+    // Join room with user's email
+    socketConnection.emit('joinRoom', user.email);
+
+    // Listen for new notifications
+    socketConnection.on('newNotification', (notification) => {
+      setNotifications(prev => [notification, ...prev]);
+    });
+
+    return () => {
+      socketConnection.disconnect();
+    };
+  }, [user?.email]);
+
   const getSubjectName = (subjectId, subjectList = subjects) => {
     if (!subjectId || !subjectList?.length) return 'Subject';
     const match = subjectList.find((subject) => `${subject.id}` === `${subjectId}`);
     return match?.name || 'Subject';
+  };
+
+  const formatAssessmentStatus = (dateString) => {
+    const dueDate = new Date(dateString);
+    if (Number.isNaN(dueDate.getTime())) return 'Unknown';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const normalizedDue = new Date(dueDate);
+    normalizedDue.setHours(0, 0, 0, 0);
+
+    if (normalizedDue.getTime() < today.getTime()) return 'Overdue';
+    if (normalizedDue.getTime() === today.getTime()) return 'Today';
+    return 'Upcoming';
   };
 
   const className = useMemo(() => {

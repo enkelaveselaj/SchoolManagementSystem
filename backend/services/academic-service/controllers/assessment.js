@@ -5,9 +5,27 @@ exports.create = async (req, res) => {
   res.json(data);
 };
 
+exports.createWithScores = async (req, res) => {
+  try {
+    const data = await assessmentService.createAssessmentWithScores(req.body);
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.getAll = async (req, res) => {
   const data = await assessmentService.getAllAssessments();
   res.json(data);
+};
+
+exports.getWithScores = async (req, res) => {
+  try {
+    const data = await assessmentService.getAssessmentWithScores(req.params.id);
+    res.json(data);
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
 };
 
 exports.update = async (req, res) => {
@@ -16,6 +34,19 @@ exports.update = async (req, res) => {
     req.body
   );
   res.json(result);
+};
+
+exports.updateStudentAssessmentScore = async (req, res) => {
+  try {
+    const score = await assessmentService.updateStudentAssessmentScore(
+      req.params.assessmentId,
+      req.params.studentId,
+      req.body
+    );
+    res.json(score);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.delete = async (req, res) => {

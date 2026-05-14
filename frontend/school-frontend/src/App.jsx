@@ -8,6 +8,9 @@ import SubjectManagement from './components/SubjectManagement'
 import Dashboard from './components/Dashboard'
 import Login from './components/Login'
 import schoolService from './services/schoolService'
+import About from './components/About'
+import Academics from './components/Academics'
+import Contact from './components/Contact'
 import FAQManagement from './components/FAQManagement'
 import AssessmentManagement from './components/teacher/AssessmentManagement'
 import GradeManagement from './components/teacher/GradeManagement'
@@ -216,10 +219,10 @@ const App = () => {
       <Navigation />
 
       {page === 'home' && <LandingHero schoolData={schoolData} />}
-      {page === 'about' && <div>About Page</div>}
-      {page === 'academics' && <div>Academics Page</div>}
+      {page === 'about' && <About schoolData={schoolData} />}
+      {page === 'academics' && <Academics schoolData={schoolData} />}
       {page === 'faq' && <FAQManagement />}
-      {page === 'contact' && <div>Contact Page</div>}
+      {page === 'contact' && <Contact schoolData={schoolData} />}
       {page === 'login' && <Login onLoginSuccess={handleLoginSuccess} />}
 
       {page === 'admin-panel' && <AdminPanel navigate={setPage} currentPage={page} />}

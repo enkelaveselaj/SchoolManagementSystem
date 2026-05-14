@@ -64,6 +64,18 @@ class AssessmentScoreRepository {
     });
   }
 
+  async findByAssessmentAndStudent(assessmentId, studentId) {
+    return AssessmentScore.findOne({
+      where: { assessmentId, studentId },
+      include: [
+        {
+          model: Assessment,
+          as: 'assessment'
+        }
+      ]
+    });
+  }
+
   async update(id, data) {
     return AssessmentScore.update(data, { where: { id } });
   }

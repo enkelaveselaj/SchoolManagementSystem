@@ -18,6 +18,17 @@ class AssessmentRepository {
     return Assessment.findByPk(id);
   }
 
+  async findByIdWithScores(id) {
+    return Assessment.findByPk(id, {
+      include: [
+        {
+          model: require('../src/models').AssessmentScore,
+          as: 'scores'
+        }
+      ]
+    });
+  }
+
   async findByStudentAndSubject(studentId, subjectId) {
     
     await authServiceClient.validateUser(studentId, 'Student');

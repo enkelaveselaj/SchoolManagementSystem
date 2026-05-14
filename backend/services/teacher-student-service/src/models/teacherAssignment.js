@@ -20,12 +20,12 @@ export default (sequelize, DataTypes) => {
 
       classId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
       },
 
       academicYearId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
       },
     }
   );

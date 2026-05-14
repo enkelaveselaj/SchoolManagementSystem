@@ -4,14 +4,24 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const Stripe = require('stripe');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 const { sequelize } = require('./src/models');
 const paymentRoutes = require('./src/routes/paymentRoutes');
 const messageRoutes = require('./src/routes/messages');
-const notificationRoutes = require('./src/routes/notifications');
 const paymentService = require('./src/services/paymentService');
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
+const notificationRoutes = require('./src/routes/notifications')(io);
 
 app.use(cors());
 
@@ -61,6 +71,38 @@ app.use('/', paymentRoutes);
 app.use('/messages', messageRoutes);
 app.use('/notifications', notificationRoutes);
 
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+
+  // Join a room
+  socket.on('joinRoom', (room) => {
+    socket.join(room);
+    console.log(`User ${socket.id} joined room: ${room}`);
+  });
+
+  // Handle sending messages
+  socket.on('sendMessage', async (data) => {
+    try {
+      const { room, senderEmail, senderName, senderRole, text } = data;
+      
+      // Save to database
+      const Message = require('./src/models/message');
+      const message = await Message.create({ room, senderEmail, senderName, senderRole, text });
+      
+      // Broadcast to room
+      io.to(room).emit('newMessage', message);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      socket.emit('messageError', { error: 'Failed to send message' });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/school_messaging';
 
 const startServer = async () => {
@@ -75,7 +117,7 @@ const startServer = async () => {
     console.log('MySQL database connected and synced successfully.');
 
     const port = process.env.PORT || 5005;
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`Real-time service running on port ${port}`);
     });
   } catch (err) {

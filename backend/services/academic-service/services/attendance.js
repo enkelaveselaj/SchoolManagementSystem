@@ -1,4 +1,15 @@
 const attendanceRepository = require('../repositories/attendance');
+const notificationService = require('./notificationService');
+const authServiceClient = require('./authServiceClient');
+
+const normalizeCounts = (stats) => ({
+  ...stats,
+  totalRecords: Number(stats.totalRecords) || 0,
+  presentCount: Number(stats.presentCount) || 0,
+  absentCount: Number(stats.absentCount) || 0,
+  lateCount: Number(stats.lateCount) || 0,
+  excusedCount: Number(stats.excusedCount) || 0,
+});
 
 class AttendanceService {
   // Mark attendance for multiple students in a class
@@ -41,6 +52,14 @@ class AttendanceService {
           });
           console.log('Updated attendance:', updatedAttendance);
           results.push(updatedAttendance);
+
+          // Send notification to student
+          try {
+            const student = await authServiceClient.getUserById(studentId);
+            await notificationService.notifyStudentAttendanceMarked(student.email, date, status);
+          } catch (err) {
+            console.warn('Failed to send attendance notification:', err.message);
+          }
         } else {
           // Create new attendance record
           const newAttendance = await attendanceRepository.create({
@@ -59,6 +78,14 @@ class AttendanceService {
           });
           console.log('Created new attendance:', newAttendance);
           results.push(newAttendance);
+
+          // Send notification to student
+          try {
+            const student = await authServiceClient.getUserById(studentId);
+            await notificationService.notifyStudentAttendanceMarked(student.email, date, status);
+          } catch (err) {
+            console.warn('Failed to send attendance notification:', err.message);
+          }
         }
       }
 
@@ -97,7 +124,7 @@ class AttendanceService {
   // Get attendance statistics for a class
   async getClassAttendanceStats(classId, startDate = null, endDate = null) {
     try {
-      const stats = await attendanceRepository.getClassStats(classId, startDate, endDate);
+      const stats = normalizeCounts(await attendanceRepository.getClassStats(classId, startDate, endDate));
       
       // Calculate attendance rate
       const attendanceRate = stats.totalRecords > 0 
@@ -117,7 +144,7 @@ class AttendanceService {
   // Get attendance statistics for a student
   async getStudentAttendanceStats(studentId, startDate = null, endDate = null) {
     try {
-      const stats = await attendanceRepository.getStudentStats(studentId, startDate, endDate);
+      const stats = normalizeCounts(await attendanceRepository.getStudentStats(studentId, startDate, endDate));
       
       // Calculate attendance rate
       const attendanceRate = stats.totalRecords > 0 

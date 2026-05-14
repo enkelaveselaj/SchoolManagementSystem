@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, MessageCircle } from 'lucide-react';
+import { io } from 'socket.io-client';
 import messagingService from '../../services/messagingService';
 
 const StudentChat = ({ user, student }) => {
@@ -7,15 +8,35 @@ const StudentChat = ({ user, student }) => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [socket, setSocket] = useState(null);
   const messagesEndRef = useRef(null);
 
   const room = 'student-general-chat';
 
   useEffect(() => {
+    // Load initial messages
     loadMessages();
-    // Poll for new messages every 5 seconds
-    const interval = setInterval(loadMessages, 5000);
-    return () => clearInterval(interval);
+
+    // Connect to Socket.IO
+    const socketConnection = io(import.meta.env.VITE_REALTIME_API_URL || 'http://localhost:5005');
+    setSocket(socketConnection);
+
+    // Join room
+    socketConnection.emit('joinRoom', room);
+
+    // Listen for new messages
+    socketConnection.on('newMessage', (message) => {
+      setMessages(prev => [...prev, message]);
+    });
+
+    // Listen for errors
+    socketConnection.on('messageError', (error) => {
+      setError(error.error);
+    });
+
+    return () => {
+      socketConnection.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -33,22 +54,24 @@ const StudentChat = ({ user, student }) => {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !socket) return;
 
     try {
       setLoading(true);
       setError('');
 
-      await messagingService.sendMessage({
+      const messageData = {
         room,
         senderEmail: user?.email,
-        senderName: user?.firstName + ' ' + user?.lastName,
+        senderName: student?.firstName + ' ' + student?.lastName,
         senderRole: 'student',
         text: newMessage.trim()
-      });
+      };
+
+      // Send via Socket.IO
+      socket.emit('sendMessage', messageData);
 
       setNewMessage('');
-      await loadMessages();
     } catch (err) {
       setError('Failed to send message');
       console.error('Failed to send message:', err);
