@@ -1,25 +1,26 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useAuthStore } from '../../store/authStore';
-import api from '../../services/api';
-import { STORAGE_KEYS } from '../../utils/constants';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { useAuth } from '../../hooks/useAuth';
+import { validateEmail } from '../../utils/validators';
 export default function LoginScreen({navigation}){
   const [email,setEmail]=useState('');
   const [password,setPassword]=useState('');
   const [loading,setLoading]=useState(false);
-  const setUser = useAuthStore(state=>state.setUser);
-  const setToken = useAuthStore(state=>state.setToken);
+  const { login } = useAuth();
   const handleLogin=async()=>{
+    if(!email){ Alert.alert('Validation','Email is required'); return; }
+    if(!validateEmail(email)){ Alert.alert('Validation','Please enter a valid email'); return; }
+    if(!password){ Alert.alert('Validation','Password is required'); return; }
+
     setLoading(true);
     try{
-      const res=await api.post('/auth/login',{email,password});
-      const { token,user } = res.data;
-      await AsyncStorage.setItem(STORAGE_KEYS.TOKEN,token);
-      setUser(user);
-      setToken(token);
+      const result = await login(email, password);
+      if (!result.success) {
+        Alert.alert('Login Failed', result.error || 'Unable to sign in');
+      }
     }catch(e){
       console.log(e.message);
+      Alert.alert('Error', 'An unexpected error occurred');
     }finally{setLoading(false);}
   };
   return (
