@@ -4,9 +4,11 @@ export const useAuthStore = create((set)=>({
   user:null,
   token:null,
   isLoggedIn:false,
+  isLoading:false,
   setUser:(user)=>set({user,isLoggedIn:!!user}),
   setToken:(token)=>set({token}),
+  setIsLoading:(isLoading)=>set({isLoading}),
   logout:async()=>{await AsyncStorage.removeItem('@auth_token');set({user:null,token:null,isLoggedIn:false});},
-  restoreToken:async()=>{try{const token=await AsyncStorage.getItem('@auth_token');if(token){set({token,isLoggedIn:true});}}catch(e){}}
+  restoreToken:async()=>{try{const token=await AsyncStorage.getItem('@auth_token');if(token){set({token,isLoggedIn:true});}}catch(e){} }
 }));
 
