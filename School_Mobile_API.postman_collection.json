@@ -1,0 +1,280 @@
+{
+  "info": {
+    "_postman_id": "school-management-api",
+    "name": "School Management System - Mobile API",
+    "description": "Complete API collection for School Management System Mobile App development",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"first_name\": \"John\", \"last_name\": \"Doe\", \"email\": \"john.doe@school.com\", \"password\": \"Password123\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"student@school.com\", \"password\": \"password123\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"student@school.com\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"newPassword\": \"NewPassword456\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/reset-password/{{reset_token}}",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "reset-password", "{{reset_token}}"]
+            }
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"token\": \"{{email_verification_token}}\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/verify-email",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "verify-email"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Academics",
+      "item": [
+        {
+          "name": "Get Grades",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/grades?studentId=123",
+              "host": ["{{base_url}}"],
+              "path": ["grades"],
+              "query": [
+                {
+                  "key": "studentId",
+                  "value": "123"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Attendance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/attendance/student/123",
+              "host": ["{{base_url}}"],
+              "path": ["attendance", "student", "123"]
+            }
+          }
+        },
+        {
+          "name": "Get Attendance Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/attendance/student/123/stats",
+              "host": ["{{base_url}}"],
+              "path": ["attendance", "student", "123", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Assessments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/assessments",
+              "host": ["{{base_url}}"],
+              "path": ["assessments"]
+            }
+          }
+        },
+        {
+          "name": "Get Assessment Scores",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/assessment-scores/123",
+              "host": ["{{base_url}}"],
+              "path": ["assessment-scores", "123"]
+            }
+          }
+        },
+        {
+          "name": "Get Announcements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/announcements",
+              "host": ["{{base_url}}"],
+              "path": ["announcements"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Student Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/student/123",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "student", "123"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reset_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "email_verification_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "protocolProfileBehavior": {}
+}
+
