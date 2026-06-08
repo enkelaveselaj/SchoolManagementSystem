@@ -1,4 +1,11 @@
 {
+  "name": "school-management-system",
+  "private": true,
+  "scripts": {
+    "start": "npm --prefix SchoolMobileApp start",
+    "start:mobile": "npm --prefix SchoolMobileApp start",
+    "start:backend": "npm --prefix backend/api-gateway start"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0"
   }
