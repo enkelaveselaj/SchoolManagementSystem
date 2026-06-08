@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import api from '../../services/api';
+import { useAuth } from '../../hooks/useAuth';
 export default function ForgotPasswordScreen({navigation}){
   const [email,setEmail]=useState('');
-  const handleSend=async()=>{try{await api.post('/auth/forgot-password',{email});Alert.alert('If account exists, a reset link was sent');navigation.navigate('Login');}catch(e){console.log(e.message);} };
+  const { forgotPassword } = useAuth();
+  const handleSend=async()=>{
+    try{
+      const result = await forgotPassword(email);
+      if(result.success){ Alert.alert('Success', result.message || 'If account exists, a reset link was sent'); navigation.navigate('Login'); }
+      else { Alert.alert('Error', result.error || 'Unable to send reset link'); }
+    }catch(e){console.log(e.message); Alert.alert('Error','An unexpected error occurred');}
+  };
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Forgot Password</Text>
