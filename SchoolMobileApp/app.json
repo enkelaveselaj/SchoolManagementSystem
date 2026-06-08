@@ -1,0 +1,12 @@
+  {
+  "expo": {
+    "name": "SchoolMobileApp",
+    "slug": "schoolmobileapp",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "platforms": ["ios","android"],
+    "orientation": "portrait",
+    "assetBundlePatterns": ["**/*"],
+    "updates": {"fallbackToCacheTimeout": 0}
+  }
+}
