@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import PasswordStrength from '../../components/PasswordStrength';
 import { useAuth } from '../../hooks/useAuth';
 import { validateEmail, validatePassword, validateUsername } from '../../utils/validators';
 import { Alert } from 'react-native';
@@ -31,6 +32,7 @@ export default function RegisterScreen({navigation}){
       <TextInput style={styles.input} placeholder="Username" value={username} onChangeText={setUsername} autoCapitalize='none' />
       <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize='none' />
       <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
+      <PasswordStrength password={password} />
       <TouchableOpacity style={styles.button} onPress={handleRegister}><Text style={styles.buttonText}>Register</Text></TouchableOpacity>
     </View>
   );
