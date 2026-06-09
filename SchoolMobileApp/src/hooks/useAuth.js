@@ -33,10 +33,10 @@ export function useAuth() {
   );
 
   const register = useCallback(
-    async (email, username, password, confirmPassword) => {
+    async (email, firstName, lastName, password, confirmPassword) => {
       setIsLoading?.(true);
       try {
-        const result = await authService.register(email, username, password, confirmPassword);
+        const result = await authService.register(email, firstName, lastName, password, confirmPassword);
         if (result.success) {
           return { success: true, message: result.message };
         }

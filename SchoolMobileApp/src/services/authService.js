@@ -1,4 +1,4 @@
-import api from './api';
+import { authApi as api } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../utils/constants';
 
@@ -20,13 +20,18 @@ class AuthService {
     }
   }
 
-  async register(email, username, password, confirmPassword) {
+  async register(email, firstName, lastName, password, confirmPassword) {
     try {
       if (password !== confirmPassword) {
         return { success: false, error: 'Passwords do not match' };
       }
 
-      const response = await api.post('/auth/register', { email, username, password });
+      const response = await api.post('/auth/register', {
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        password
+      });
       return { success: true, message: response.data?.message || 'Registration successful. Please verify your email.' };
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Registration failed';

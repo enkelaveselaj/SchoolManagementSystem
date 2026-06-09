@@ -1,4 +1,4 @@
-import api from './api';
+import { academicApi as api } from './api';
 
 class StudentService {
   async getDashboard(studentId) {

@@ -9,8 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../hooks/useAuth';
-import { colors, spacing } from '../styles';
+import { useAuth } from '../../hooks/useAuth';
+import { colors, spacing } from '../../styles';
 
 export default function SettingsScreen({ navigation }) {
   const { user, logout } = useAuth();

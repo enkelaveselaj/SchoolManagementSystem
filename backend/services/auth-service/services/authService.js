@@ -91,6 +91,8 @@ export const loginUser = async (data) => {
     user: {
       id: user.id,
       email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name,
       role,
       is_super_admin: user.is_super_admin
     }

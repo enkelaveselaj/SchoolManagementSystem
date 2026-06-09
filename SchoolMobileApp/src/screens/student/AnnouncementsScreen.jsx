@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../../styles';
-import api from '../../services/api';
+import { academicApi as api } from '../../services/api';
 
 export default function AnnouncementsScreen() {
   const [announcements, setAnnouncements] = useState([]);

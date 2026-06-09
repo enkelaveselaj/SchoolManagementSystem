@@ -31,18 +31,23 @@ class PushNotificationService {
         return null;
       }
 
-      const token = await Notifications.getExpoPushTokenAsync();
-      return token.data;
+      // Silence error for Expo Go / Missing Project ID during demo
+      try {
+        const token = await Notifications.getExpoPushTokenAsync();
+        return token.data;
+      } catch (e) {
+        console.log("Push notifications skipped (Expo Go limitation or missing projectId)");
+        return null;
+      }
     } catch (error) {
-      console.error('Failed to get push token:', error);
       return null;
     }
   }
 
   async registerToken(userId, token) {
     try {
-      const api = (await import('../services/api')).default;
-      await api.post('/notifications/register-token', { userId, token });
+      const { realTimeApi } = await import('../services/api');
+      await realTimeApi.post('/notifications/register-token', { userId, token });
     } catch (error) {
       console.error('Failed to register push token:', error);
     }

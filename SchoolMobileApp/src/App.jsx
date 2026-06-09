@@ -10,7 +10,14 @@ import { useAuthStore } from './store/authStore';
 export default function App(){
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
+  const restoreToken = useAuthStore((s) => s.restoreToken);
 
+  // Restore token on mount
+  useEffect(() => {
+    restoreToken();
+  }, []);
+
+  // Initialize notifications when token and user are available
   useEffect(() => {
     let mounted = true;
 
@@ -38,7 +45,9 @@ export default function App(){
     return () => {
       mounted = false;
       notificationService.disconnect();
-      pushNotificationService.cleanupNotificationHandlers && pushNotificationService.cleanupNotificationHandlers();
+      if (pushNotificationService.cleanupNotificationHandlers) {
+        pushNotificationService.cleanupNotificationHandlers();
+      }
     };
   }, [token, user]);
 
@@ -50,4 +59,3 @@ export default function App(){
     </NavigationContainer>
   );
 }
-

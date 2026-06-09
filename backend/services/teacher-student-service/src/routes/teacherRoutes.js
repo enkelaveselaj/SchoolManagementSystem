@@ -7,6 +7,7 @@ const router = express.Router();
 router.post("/", controller.createTeacher);
 router.get("/", controller.getAllTeachers);
 router.get("/:id", controller.getTeacherById);
+router.get("/user/:userId", controller.getTeacherByUserId);
 router.put("/:id", controller.updateTeacher);
 router.delete("/:id", controller.deleteTeacher);
 router.post("/:teacherId/subjects/:subjectId", controller.assignTeacherToSubject);

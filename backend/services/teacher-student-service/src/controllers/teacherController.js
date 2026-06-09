@@ -51,16 +51,35 @@ export const deleteTeacher = async (req, res) => {
   }
 };
 
+export const getTeacherByUserId = async (req, res) => {
+  try {
+    const teacher = await db.Teacher.findOne({ where: { userId: req.params.userId } });
+    if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+    res.json(teacher);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const assignTeacherToSubject = async (req, res) => {
   try {
     const { teacherId, subjectId } = req.params;
     
-    // For now, just return success message
-    // In a real implementation, you would create a TeacherSubject assignment record
+    // Check if teacher exists
+    const teacher = await db.Teacher.findByPk(teacherId);
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    // Create assignment
+    const assignment = await db.TeacherAssignment.create({
+      teacherId: parseInt(teacherId),
+      subjectId: parseInt(subjectId)
+    });
+
     res.status(201).json({ 
       message: "Teacher assigned to subject successfully",
-      teacherId,
-      subjectId
+      assignment
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
