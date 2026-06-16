@@ -27,7 +27,7 @@ export default function TeacherDashboardScreen({ navigation }) {
       icon: 'calendar',
       color: '#2196F3',
       description: 'View your teaching schedule',
-      action: () => {}
+      action: () => navigation.navigate('TeacherTimetable')
     },
     {
       title: 'Announcements',

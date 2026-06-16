@@ -28,9 +28,9 @@ class TeacherService {
     }
   }
 
-  async assignTeacherToSubject(teacherId, subjectId) {
+  async assignTeacherToSubject(teacherId, subjectId, classId = null) {
     try {
-      const response = await api.post(`/teachers/${teacherId}/subjects/${subjectId}`);
+      const response = await api.post(`/teachers/${teacherId}/subjects/${subjectId}`, { classId });
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.response?.data?.error || 'Failed to assign teacher' };

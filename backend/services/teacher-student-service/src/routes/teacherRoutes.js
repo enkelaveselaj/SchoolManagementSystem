@@ -11,5 +11,6 @@ router.get("/user/:userId", controller.getTeacherByUserId);
 router.put("/:id", controller.updateTeacher);
 router.delete("/:id", controller.deleteTeacher);
 router.post("/:teacherId/subjects/:subjectId", controller.assignTeacherToSubject);
+router.get("/:teacherId/classes", controller.getTeacherClasses);
 
 export default router;

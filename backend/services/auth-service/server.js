@@ -11,13 +11,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000").split(",").map(origin => origin.trim())
-
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  optionsSuccessStatus: 200
-}))
+app.use(cors())
 
 app.use(express.json());
 
@@ -46,6 +40,6 @@ app.get("/protected", verifyToken, (req, res) => {
   });
 });
 
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT, "0.0.0.0", () => {
   console.log(`Auth service running on port ${process.env.PORT}`);
 });

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../../styles';
 import adminService from '../../services/adminService';
+import studentManagementService from '../../services/studentManagementService';
 
 export default function CreateUserScreen({ navigation }) {
   const [formData, setFormData] = useState({
@@ -10,7 +10,13 @@ export default function CreateUserScreen({ navigation }) {
     last_name: '',
     email: '',
     password: '',
-    role: 'Student', // Default
+    role: 'Student',
+    // Teacher specific
+    employeeId: '',
+    specialization: '',
+    // Student specific
+    dateOfBirth: '',
+    gender: 'male',
   });
   const [loading, setLoading] = useState(false);
 
@@ -20,20 +26,58 @@ export default function CreateUserScreen({ navigation }) {
     const { first_name, last_name, email, password, role } = formData;
 
     if (!first_name || !last_name || !email || !password) {
-      Alert.alert('Error', 'All fields are required');
+      Alert.alert('Error', 'Required basic fields are missing');
       return;
     }
 
     setLoading(true);
-    const result = await adminService.createUser(formData);
-    setLoading(false);
+    try {
+      // 1. Create Auth User
+      const authRes = await adminService.createUser({
+        first_name,
+        last_name,
+        email,
+        password,
+        role
+      });
 
-    if (result.success) {
-      Alert.alert('Success', 'User created successfully', [
+      if (!authRes.success) {
+        throw new Error(authRes.error);
+      }
+
+      const userId = authRes.data.id;
+
+      // 2. Create Role-specific Record
+      if (role === 'Teacher') {
+        const teacherRes = await adminService.createTeacher({
+          firstName: first_name,
+          lastName: last_name,
+          email,
+          password, // Usually teacher service handles its own hash but here we use auth userId
+          employeeId: formData.employeeId,
+          specialization: formData.specialization,
+          userId
+        });
+        if (!teacherRes.success) throw new Error(teacherRes.error);
+      } else if (role === 'Student') {
+        const studentRes = await studentManagementService.createStudent({
+          firstName: first_name,
+          lastName: last_name,
+          email,
+          gender: formData.gender,
+          dateOfBirth: formData.dateOfBirth,
+          userId
+        });
+        if (!studentRes.success) throw new Error(studentRes.error);
+      }
+
+      Alert.alert('Success', `${role} created successfully`, [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
-    } else {
-      Alert.alert('Error', result.error);
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Operation failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,7 +108,7 @@ export default function CreateUserScreen({ navigation }) {
           style={styles.input}
           value={formData.first_name}
           onChangeText={(text) => setFormData({ ...formData, first_name: text })}
-          placeholder="Enter first name"
+          placeholder="First name"
         />
 
         <Text style={styles.label}>Last Name</Text>
@@ -72,7 +116,7 @@ export default function CreateUserScreen({ navigation }) {
           style={styles.input}
           value={formData.last_name}
           onChangeText={(text) => setFormData({ ...formData, last_name: text })}
-          placeholder="Enter last name"
+          placeholder="Last name"
         />
 
         <Text style={styles.label}>Email Address</Text>
@@ -80,9 +124,8 @@ export default function CreateUserScreen({ navigation }) {
           style={styles.input}
           value={formData.email}
           onChangeText={(text) => setFormData({ ...formData, email: text })}
-          placeholder="Enter email"
+          placeholder="Email"
           autoCapitalize="none"
-          keyboardType="email-address"
         />
 
         <Text style={styles.label}>Password</Text>
@@ -90,9 +133,52 @@ export default function CreateUserScreen({ navigation }) {
           style={styles.input}
           value={formData.password}
           onChangeText={(text) => setFormData({ ...formData, password: text })}
-          placeholder="Enter password"
+          placeholder="Password"
           secureTextEntry
         />
+
+        {formData.role === 'Teacher' && (
+          <>
+            <Text style={styles.label}>Employee ID</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.employeeId}
+              onChangeText={(text) => setFormData({ ...formData, employeeId: text })}
+              placeholder="EMP123"
+            />
+            <Text style={styles.label}>Specialization</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.specialization}
+              onChangeText={(text) => setFormData({ ...formData, specialization: text })}
+              placeholder="e.g. Mathematics"
+            />
+          </>
+        )}
+
+        {formData.role === 'Student' && (
+          <>
+            <Text style={styles.label}>Birth Date (YYYY-MM-DD)</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.dateOfBirth}
+              onChangeText={(text) => setFormData({ ...formData, dateOfBirth: text })}
+              placeholder="2010-01-01"
+            />
+            <Text style={styles.label}>Gender</Text>
+            <View style={styles.roleContainer}>
+                {['male', 'female'].map(g => (
+                    <TouchableOpacity
+                        key={g}
+                        style={[styles.roleButton, formData.gender === g && styles.roleButtonActive]}
+                        onPress={() => setFormData({...formData, gender: g})}
+                    >
+                        <Text style={[styles.roleButtonText, formData.gender === g && styles.roleButtonTextActive]}>{g}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+          </>
+        )}
 
         <TouchableOpacity
           style={styles.submitButton}
@@ -102,7 +188,7 @@ export default function CreateUserScreen({ navigation }) {
           {loading ? (
             <ActivityIndicator color={colors.white} />
           ) : (
-            <Text style={styles.submitButtonText}>Create User</Text>
+            <Text style={styles.submitButtonText}>Create Account</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -111,61 +197,15 @@ export default function CreateUserScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  form: {
-    padding: spacing.lg,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.black,
-    marginBottom: spacing.xs,
-    marginTop: spacing.md,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: spacing.md,
-    fontSize: 16,
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  roleButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  roleButtonActive: {
-    backgroundColor: colors.primary,
-  },
-  roleButtonText: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  roleButtonTextActive: {
-    color: colors.white,
-  },
-  submitButton: {
-    backgroundColor: colors.primary,
-    padding: spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: spacing.xl,
-  },
-  submitButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  container: { flex: 1, backgroundColor: colors.white },
+  form: { padding: spacing.lg },
+  label: { fontSize: 14, fontWeight: '600', color: colors.black, marginBottom: spacing.xs, marginTop: spacing.md },
+  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: spacing.md, fontSize: 16 },
+  roleContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
+  roleButton: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: 20, borderWidth: 1, borderColor: colors.primary },
+  roleButtonActive: { backgroundColor: colors.primary },
+  roleButtonText: { color: colors.primary, fontSize: 12, fontWeight: 'bold' },
+  roleButtonTextActive: { color: colors.white },
+  submitButton: { backgroundColor: colors.primary, padding: spacing.md, borderRadius: 8, alignItems: 'center', marginTop: spacing.xl },
+  submitButtonText: { color: colors.white, fontSize: 16, fontWeight: 'bold' },
 });

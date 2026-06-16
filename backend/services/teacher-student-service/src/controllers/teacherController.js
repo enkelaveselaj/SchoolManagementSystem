@@ -64,7 +64,8 @@ export const getTeacherByUserId = async (req, res) => {
 export const assignTeacherToSubject = async (req, res) => {
   try {
     const { teacherId, subjectId } = req.params;
-    
+    const { classId, academicYearId } = req.body;
+
     // Check if teacher exists
     const teacher = await db.Teacher.findByPk(teacherId);
     if (!teacher) {
@@ -74,13 +75,27 @@ export const assignTeacherToSubject = async (req, res) => {
     // Create assignment
     const assignment = await db.TeacherAssignment.create({
       teacherId: parseInt(teacherId),
-      subjectId: parseInt(subjectId)
+      subjectId: parseInt(subjectId),
+      classId: classId ? parseInt(classId) : null,
+      academicYearId: academicYearId ? parseInt(academicYearId) : null
     });
 
     res.status(201).json({ 
-      message: "Teacher assigned to subject successfully",
+      message: "Teacher assigned successfully",
       assignment
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getTeacherClasses = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const assignments = await db.TeacherAssignment.findAll({
+      where: { teacherId }
+    });
+    res.json(assignments);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -11,7 +11,7 @@ import { useAuthStore } from '../store/authStore';
 const createInstance = (baseURL) => {
   const instance = axios.create({
     baseURL,
-    timeout: 10000,
+    timeout: 15000,
     headers: { 'Content-Type': 'application/json' }
   });
 
@@ -22,9 +22,21 @@ const createInstance = (baseURL) => {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+      // console.log(`[API Request] ${config.method.toUpperCase()} ${config.url}`);
       return config;
     },
     (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // Add a response interceptor for debugging and unwrapping
+  instance.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    (error) => {
+      console.error(`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, error.response?.data || error.message);
       return Promise.reject(error);
     }
   );
@@ -38,6 +50,6 @@ export const academicApi = createInstance(ACADEMIC_SERVICE_URL);
 export const teacherStudentApi = createInstance(TEACHER_STUDENT_SERVICE_URL);
 export const realTimeApi = createInstance(REAL_TIME_SERVICE_URL);
 
-// For backward compatibility if needed, or default to one
+// For backward compatibility
 const api = authApi;
 export default api;

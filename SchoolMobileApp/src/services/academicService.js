@@ -1,9 +1,9 @@
-import { academicApi as api } from './api';
+import { academicApi } from './api';
 
 class AcademicService {
   async getSubjects() {
     try {
-      const response = await api.get('/subjects');
+      const response = await academicApi.get('/subjects');
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.response?.data?.error || 'Failed to fetch subjects' };
@@ -12,7 +12,7 @@ class AcademicService {
 
   async createSubject(data) {
     try {
-      const response = await api.post('/subjects', data);
+      const response = await academicApi.post('/subjects', data);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.response?.data?.error || 'Failed to create subject' };
@@ -21,7 +21,7 @@ class AcademicService {
 
   async getAssessments(params) {
     try {
-      const response = await api.get('/assessments', { params });
+      const response = await academicApi.get('/assessments', { params });
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.response?.data?.error || 'Failed to fetch assessments' };
@@ -30,7 +30,7 @@ class AcademicService {
 
   async createAssessment(data) {
     try {
-      const response = await api.post('/assessments', data);
+      const response = await academicApi.post('/assessments', data);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.response?.data?.error || 'Failed to create assessment' };
@@ -39,10 +39,46 @@ class AcademicService {
 
   async markAttendance(data) {
     try {
-      const response = await api.post('/attendance', data);
+      const response = await academicApi.post('/attendance', data);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.response?.data?.error || 'Failed to mark attendance' };
+    }
+  }
+
+  async getTimetables(params) {
+    try {
+      const response = await academicApi.get('/timetable', { params });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || 'Failed to fetch timetables' };
+    }
+  }
+
+  async createTimetable(data) {
+    try {
+      const response = await academicApi.post('/timetable', data);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || 'Failed to create timetable' };
+    }
+  }
+
+  async getAssessmentScores(assessmentId) {
+    try {
+      const response = await academicApi.get(`/assessment-scores/assessment/${assessmentId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || 'Failed to fetch scores' };
+    }
+  }
+
+  async submitScore(data) {
+    try {
+      const response = await academicApi.post('/assessment-scores', data);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || 'Failed to submit score' };
     }
   }
 }

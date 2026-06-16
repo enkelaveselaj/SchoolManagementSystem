@@ -90,7 +90,19 @@ export default function DashboardScreen({ navigation }) {
         >
           <Ionicons name="list" size={32} color="#FF9800" />
           <Text style={styles.statValue}>{pendingAssessments}</Text>
-          <Text style={styles.statLabel}>Pending</Text>
+          <Text style={styles.statLabel}>Assessments</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Quick Actions */}
+      <View style={styles.quickActions}>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Timetable')}>
+            <Ionicons name="calendar" size={24} color={colors.primary} />
+            <Text style={styles.actionLabel}>Timetable</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Announcements')}>
+            <Ionicons name="megaphone" size={24} color={colors.primary} />
+            <Text style={styles.actionLabel}>News</Text>
         </TouchableOpacity>
       </View>
 
@@ -245,6 +257,9 @@ const styles=StyleSheet.create({
     color: colors.gray600 || '#6B7280',
     marginTop: spacing.xs,
   },
+  quickActions: { flexDirection: 'row', paddingHorizontal: spacing.lg, gap: 10, marginBottom: 20 },
+  actionBtn: { flex: 1, backgroundColor: colors.white, padding: 15, borderRadius: 12, alignItems: 'center', elevation: 2 },
+  actionLabel: { fontSize: 12, fontWeight: 'bold', marginTop: 5, color: colors.gray900 },
   section: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,

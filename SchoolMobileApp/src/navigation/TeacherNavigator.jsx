@@ -6,6 +6,8 @@ import TeacherDashboardScreen from '../screens/teacher/TeacherDashboardScreen';
 import TeacherClassesScreen from '../screens/teacher/TeacherClassesScreen';
 import TeacherAssessmentScreen from '../screens/teacher/TeacherAssessmentScreen';
 import TeacherMarkAttendanceScreen from '../screens/teacher/TeacherMarkAttendanceScreen';
+import TeacherScoringScreen from '../screens/teacher/TeacherScoringScreen';
+import TeacherTimetableScreen from '../screens/teacher/TeacherTimetableScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import { colors } from '../styles';
 
@@ -28,12 +30,22 @@ function TeacherHomeStack() {
       <Stack.Screen
         name="TeacherAssessments"
         component={TeacherAssessmentScreen}
-        options={{ title: 'Manage Assessments' }}
+        options={{ title: 'Assessments' }}
       />
       <Stack.Screen
         name="MarkAttendance"
         component={TeacherMarkAttendanceScreen}
-        options={{ title: 'Mark Attendance' }}
+        options={{ title: 'Attendance' }}
+      />
+      <Stack.Screen
+        name="Scoring"
+        component={TeacherScoringScreen}
+        options={{ title: 'Scoring' }}
+      />
+      <Stack.Screen
+        name="TeacherTimetable"
+        component={TeacherTimetableScreen}
+        options={{ title: 'Timetable' }}
       />
     </Stack.Navigator>
   );
