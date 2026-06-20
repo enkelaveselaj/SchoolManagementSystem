@@ -12,12 +12,22 @@ import AdminStudentEnrollmentScreen from '../screens/admin/AdminStudentEnrollmen
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import { colors } from '../styles';
 
+import { useTheme } from '../hooks/useTheme';
+
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 function AdminHomeStack() {
+  const { colors } = useTheme();
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.card },
+        headerTintColor: colors.text,
+        headerTitleStyle: { fontWeight: 'bold' },
+        cardStyle: { backgroundColor: colors.background }
+      }}
+    >
       <Stack.Screen
         name="AdminDashboard"
         component={AdminDashboardScreen}
@@ -58,6 +68,7 @@ function AdminHomeStack() {
 }
 
 export default function AdminNavigator() {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -73,7 +84,11 @@ export default function AdminNavigator() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.gray500,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+        },
         headerShown: false,
       })}
     >

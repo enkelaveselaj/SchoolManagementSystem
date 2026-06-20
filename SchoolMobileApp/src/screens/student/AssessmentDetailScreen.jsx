@@ -9,9 +9,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAssessment } from '../../hooks/useAssessment';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function AssessmentDetailScreen({ route, navigation }) {
+  const { colors } = useTheme();
   const { id } = route.params;
   const { assessmentDetail, loading, fetchAssessmentDetails } = useAssessment();
 
@@ -19,9 +21,11 @@ export default function AssessmentDetailScreen({ route, navigation }) {
     fetchAssessmentDetails(id);
   }, [id]);
 
+  const dynamicStyles = styles(colors);
+
   if (loading || !assessmentDetail) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={dynamicStyles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -42,41 +46,41 @@ export default function AssessmentDetailScreen({ route, navigation }) {
   const isSubmitted = status === 'submitted' || status === 'graded';
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={dynamicStyles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
+      <View style={dynamicStyles.header}>
+        <Text style={dynamicStyles.title}>{title}</Text>
         <View
           style={[
-            styles.statusBadge,
+            dynamicStyles.statusBadge,
             { backgroundColor: getStatusColor(status) },
           ]}
         >
-          <Text style={styles.statusText}>{status}</Text>
+          <Text style={dynamicStyles.statusText}>{status}</Text>
         </View>
       </View>
 
       {/* Subject */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Subject</Text>
-        <Text style={styles.sectionContent}>{subject}</Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Subject</Text>
+        <Text style={dynamicStyles.sectionContent}>{subject}</Text>
       </View>
 
       {/* Description */}
       {description && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.sectionContent}>{description}</Text>
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>Description</Text>
+          <Text style={dynamicStyles.sectionContent}>{description}</Text>
         </View>
       )}
 
       {/* Due Date */}
-      <View style={styles.section}>
-        <View style={styles.row}>
+      <View style={dynamicStyles.section}>
+        <View style={dynamicStyles.row}>
           <Ionicons name="calendar" size={20} color={colors.primary} />
-          <View style={styles.rowContent}>
-            <Text style={styles.label}>Due Date</Text>
-            <Text style={styles.value}>
+          <View style={dynamicStyles.rowContent}>
+            <Text style={dynamicStyles.label}>Due Date</Text>
+            <Text style={dynamicStyles.value}>
               {new Date(dueDate).toLocaleDateString()}
             </Text>
           </View>
@@ -85,12 +89,12 @@ export default function AssessmentDetailScreen({ route, navigation }) {
 
       {/* Score (if graded) */}
       {isSubmitted && currentScore !== undefined && (
-        <View style={styles.section}>
-          <View style={styles.row}>
+        <View style={dynamicStyles.section}>
+          <View style={dynamicStyles.row}>
             <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-            <View style={styles.rowContent}>
-              <Text style={styles.label}>Your Score</Text>
-              <Text style={styles.value}>
+            <View style={dynamicStyles.rowContent}>
+              <Text style={dynamicStyles.label}>Your Score</Text>
+              <Text style={dynamicStyles.value}>
                 {currentScore} / {totalScore}
               </Text>
             </View>
@@ -100,12 +104,12 @@ export default function AssessmentDetailScreen({ route, navigation }) {
 
       {/* Submission Date */}
       {submissionDate && (
-        <View style={styles.section}>
-          <View style={styles.row}>
+        <View style={dynamicStyles.section}>
+          <View style={dynamicStyles.row}>
             <Ionicons name="send" size={20} color={colors.primary} />
-            <View style={styles.rowContent}>
-              <Text style={styles.label}>Submitted On</Text>
-              <Text style={styles.value}>
+            <View style={dynamicStyles.rowContent}>
+              <Text style={dynamicStyles.label}>Submitted On</Text>
+              <Text style={dynamicStyles.value}>
                 {new Date(submissionDate).toLocaleDateString()}
               </Text>
             </View>
@@ -115,18 +119,18 @@ export default function AssessmentDetailScreen({ route, navigation }) {
 
       {/* Feedback */}
       {feedback && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Feedback</Text>
-          <View style={styles.feedbackBox}>
-            <Text style={styles.feedbackText}>{feedback}</Text>
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>Feedback</Text>
+          <View style={dynamicStyles.feedbackBox}>
+            <Text style={dynamicStyles.feedbackText}>{feedback}</Text>
           </View>
         </View>
       )}
 
       {/* Submit Button (if pending) */}
       {status === 'pending' && (
-        <TouchableOpacity style={styles.submitButton}>
-          <Text style={styles.submitButtonText}>Submit Assessment</Text>
+        <TouchableOpacity style={dynamicStyles.submitButton}>
+          <Text style={dynamicStyles.submitButtonText}>Submit Assessment</Text>
         </TouchableOpacity>
       )}
     </ScrollView>
@@ -142,26 +146,27 @@ function getStatusColor(status) {
     case 'graded':
       return '#4CAF50';
     default:
-      return colors.gray500 || '#9CA3AF';
+      return '#9CA3AF';
   }
 }
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray100 || '#F3F4F6',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray300 || '#E5E7EB',
+    borderBottomColor: colors.border,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -169,36 +174,43 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.gray900 || '#1F2937',
+    color: colors.text,
     flex: 1,
   },
   statusBadge: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: 4,
+    borderRadius: 8,
   },
   statusText: {
-    color: colors.white,
+    color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
   section: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     marginHorizontal: spacing.lg,
     marginTop: spacing.lg,
     padding: spacing.md,
-    borderRadius: 8,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.gray900 || '#1F2937',
-    marginBottom: spacing.sm,
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: spacing.xs,
+    textTransform: 'uppercase',
   },
   sectionContent: {
-    fontSize: 14,
-    color: colors.gray700 || '#374151',
-    lineHeight: 20,
+    fontSize: 15,
+    color: colors.text,
+    lineHeight: 22,
   },
   row: {
     flexDirection: 'row',
@@ -210,36 +222,43 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    color: colors.gray600 || '#6B7280',
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   value: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.gray900 || '#1F2937',
-    marginTop: spacing.xs,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginTop: 2,
   },
   feedbackBox: {
-    backgroundColor: colors.gray100 || '#F3F4F6',
+    backgroundColor: colors.background,
     padding: spacing.md,
     borderRadius: 8,
+    marginTop: spacing.xs,
   },
   feedbackText: {
     fontSize: 14,
-    color: colors.gray700 || '#374151',
+    color: colors.text,
     lineHeight: 20,
+    fontStyle: 'italic',
   },
   submitButton: {
     backgroundColor: colors.primary,
     marginHorizontal: spacing.lg,
-    marginVertical: spacing.lg,
+    marginVertical: spacing.xl,
     paddingVertical: spacing.md,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   submitButtonText: {
-    color: colors.white,
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: 'bold',
   },
 });
-

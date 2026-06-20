@@ -10,9 +10,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAssessment } from '../../hooks/useAssessment';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function AssessmentsScreen({ navigation }) {
+  const { colors } = useTheme();
   const { assessments, loading, fetchAssessments } = useAssessment();
   const [activeTab, setActiveTab] = useState('pending');
   const [refreshing, setRefreshing] = useState(false);
@@ -38,9 +40,11 @@ export default function AssessmentsScreen({ navigation }) {
 
   const filtered = filterAssessments();
 
+  const dynamicStyles = styles(colors);
+
   if (loading && !assessments.length) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={dynamicStyles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -48,23 +52,23 @@ export default function AssessmentsScreen({ navigation }) {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={dynamicStyles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.primary]} tintColor={colors.primary} />
       }
     >
       {/* Filter Tabs */}
-      <View style={styles.tabsContainer}>
+      <View style={dynamicStyles.tabsContainer}>
         {['pending', 'submitted', 'graded'].map((tab) => (
           <TouchableOpacity
             key={tab}
-            style={[styles.tab, activeTab === tab && styles.activeTab]}
+            style={[dynamicStyles.tab, activeTab === tab && dynamicStyles.activeTab]}
             onPress={() => setActiveTab(tab)}
           >
             <Text
               style={[
-                styles.tabText,
-                activeTab === tab && styles.activeTabText,
+                dynamicStyles.tabText,
+                activeTab === tab && dynamicStyles.activeTabText,
               ]}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -74,38 +78,38 @@ export default function AssessmentsScreen({ navigation }) {
       </View>
 
       {/* Assessments List */}
-      <View style={styles.content}>
+      <View style={dynamicStyles.content}>
         {filtered.length > 0 ? (
           filtered.map((assessment) => (
             <TouchableOpacity
               key={assessment.id}
-              style={styles.assessmentCard}
+              style={dynamicStyles.assessmentCard}
               onPress={() =>
                 navigation.navigate('AssessmentDetail', { id: assessment.id })
               }
             >
-              <View style={styles.cardHeader}>
-                <Text style={styles.title}>{assessment.title}</Text>
+              <View style={dynamicStyles.cardHeader}>
+                <Text style={dynamicStyles.title}>{assessment.title}</Text>
                 <View
                   style={[
-                    styles.statusBadge,
+                    dynamicStyles.statusBadge,
                     { backgroundColor: getStatusColor(assessment.status) },
                   ]}
                 >
-                  <Text style={styles.statusText}>{assessment.status}</Text>
+                  <Text style={dynamicStyles.statusText}>{assessment.status}</Text>
                 </View>
               </View>
-              <Text style={styles.subject}>{assessment.subject}</Text>
-              <View style={styles.cardFooter}>
-                <Ionicons name="calendar" size={14} color={colors.gray600 || '#6B7280'} />
-                <Text style={styles.dueDate}>
+              <Text style={dynamicStyles.subject}>{assessment.subject}</Text>
+              <View style={dynamicStyles.cardFooter}>
+                <Ionicons name="calendar" size={14} color={colors.textSecondary} />
+                <Text style={dynamicStyles.dueDate}>
                   Due: {new Date(assessment.dueDate).toLocaleDateString()}
                 </Text>
               </View>
             </TouchableOpacity>
           ))
         ) : (
-          <Text style={styles.emptyText}>No {activeTab} assessments</Text>
+          <Text style={dynamicStyles.emptyText}>No {activeTab} assessments</Text>
         )}
       </View>
     </ScrollView>
@@ -121,25 +125,26 @@ function getStatusColor(status) {
     case 'graded':
       return '#4CAF50';
     default:
-      return colors.gray500 || '#9CA3AF';
+      return '#9CA3AF';
   }
 }
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray100 || '#F3F4F6',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray300 || '#E5E7EB',
+    borderBottomColor: colors.border,
   },
   tab: {
     flex: 1,
@@ -153,47 +158,53 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    color: colors.gray600 || '#6B7280',
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   activeTabText: {
     color: colors.primary,
-    fontWeight: '600',
   },
   content: {
     padding: spacing.lg,
   },
   assessmentCard: {
-    backgroundColor: colors.white,
-    borderRadius: 8,
+    backgroundColor: colors.card,
+    borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.gray900 || '#1F2937',
+    fontWeight: '700',
+    color: colors.text,
     flex: 1,
   },
   statusBadge: {
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 6,
   },
   statusText: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
   subject: {
-    fontSize: 12,
-    color: colors.gray600 || '#6B7280',
-    marginBottom: spacing.sm,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
   },
   cardFooter: {
     flexDirection: 'row',
@@ -201,13 +212,12 @@ const styles = StyleSheet.create({
   },
   dueDate: {
     fontSize: 12,
-    color: colors.gray600 || '#6B7280',
-    marginLeft: spacing.sm,
+    color: colors.textSecondary,
+    marginLeft: spacing.xs,
   },
   emptyText: {
     textAlign: 'center',
-    color: colors.gray600 || '#6B7280',
+    color: colors.textSecondary,
     marginTop: spacing.lg,
   },
 });
-

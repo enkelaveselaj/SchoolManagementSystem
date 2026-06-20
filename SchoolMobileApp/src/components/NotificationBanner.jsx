@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../styles';
+import { spacing } from '../styles';
 import notificationService from '../services/notificationService';
+import { useTheme } from '../hooks/useTheme';
 
 export default function NotificationBanner() {
+  const { colors } = useTheme();
   const [notification, setNotification] = useState(null);
   const slideAnim = new Animated.Value(-100);
 
@@ -96,7 +98,7 @@ export default function NotificationBanner() {
         <Ionicons
           name={getNotificationIcon(notification.type)}
           size={24}
-          color={colors.white}
+          color="#FFFFFF"
           style={styles.icon}
         />
         <View style={styles.textContainer}>
@@ -107,7 +109,7 @@ export default function NotificationBanner() {
         </View>
       </View>
       <TouchableOpacity onPress={dismissNotification}>
-        <Ionicons name="close" size={20} color={colors.white} />
+        <Ionicons name="close" size={20} color="#FFFFFF" />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -122,7 +124,17 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     marginHorizontal: spacing.lg,
     marginTop: spacing.lg,
-    borderRadius: 8,
+    borderRadius: 12,
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   content: {
     flex: 1,
@@ -137,13 +149,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    fontWeight: '600',
-    color: colors.white,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   message: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 4,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 2,
   },
 });
-

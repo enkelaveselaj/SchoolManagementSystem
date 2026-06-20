@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import schoolService from '../../services/schoolService';
 import academicService from '../../services/academicService';
 import teacherService from '../../services/teacherService';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function AdminAcademicSetupScreen() {
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
   const [years, setYears] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -76,65 +78,67 @@ export default function AdminAcademicSetupScreen() {
     }
   };
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Academic Setup</Text>
+  const dynamicStyles = styles(colors);
 
-      {/* Assignment Section (Top for visibility) */}
-      <View style={[styles.section, { borderColor: colors.primary, borderWidth: 1 }]}>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}>Assign Teacher to Subject & Class</Text>
-        <TextInput style={styles.input} placeholder="Teacher ID" value={assignment.teacherId} onChangeText={t => setAssignment({...assignment, teacherId: t})} keyboardType="numeric" />
-        <TextInput style={styles.input} placeholder="Subject ID" value={assignment.subjectId} onChangeText={t => setAssignment({...assignment, subjectId: t})} keyboardType="numeric" />
-        <TextInput style={styles.input} placeholder="Class ID" value={assignment.classId} onChangeText={t => setAssignment({...assignment, classId: t})} keyboardType="numeric" />
-        <TouchableOpacity style={styles.button} onPress={handleAssignTeacher}>
-          <Text style={styles.buttonText}>Assign Now</Text>
+  return (
+    <ScrollView style={dynamicStyles.container} contentContainerStyle={dynamicStyles.content}>
+      <Text style={dynamicStyles.title}>Academic Setup</Text>
+
+      {/* Assignment Section */}
+      <View style={[dynamicStyles.section, { borderColor: colors.primary, borderWidth: 1 }]}>
+        <Text style={[dynamicStyles.sectionTitle, { color: colors.primary }]}>Assign Teacher to Subject & Class</Text>
+        <TextInput style={dynamicStyles.input} placeholder="Teacher ID" placeholderTextColor={colors.textSecondary} value={assignment.teacherId} onChangeText={t => setAssignment({...assignment, teacherId: t})} keyboardType="numeric" />
+        <TextInput style={dynamicStyles.input} placeholder="Subject ID" placeholderTextColor={colors.textSecondary} value={assignment.subjectId} onChangeText={t => setAssignment({...assignment, subjectId: t})} keyboardType="numeric" />
+        <TextInput style={dynamicStyles.input} placeholder="Class ID" placeholderTextColor={colors.textSecondary} value={assignment.classId} onChangeText={t => setAssignment({...assignment, classId: t})} keyboardType="numeric" />
+        <TouchableOpacity style={dynamicStyles.button} onPress={handleAssignTeacher}>
+          <Text style={dynamicStyles.buttonText}>Assign Now</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Reference: Teachers</Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Reference: Teachers</Text>
         {teachers.map(t => (
-          <View key={t.id} style={styles.item}>
-            <Text style={styles.itemText}><Text style={styles.bold}>ID: {t.id}</Text> - {t.firstName} {t.lastName}</Text>
+          <View key={t.id} style={dynamicStyles.item}>
+            <Text style={dynamicStyles.itemText}><Text style={dynamicStyles.bold}>ID: {t.id}</Text> - {t.firstName} {t.lastName}</Text>
           </View>
         ))}
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Reference: Subjects</Text>
-        <View style={styles.form}>
-          <TextInput style={styles.input} placeholder="New Subject Name" value={newSubject.name} onChangeText={t => setNewSubject({...newSubject, name: t})} />
-          <TextInput style={styles.input} placeholder="New Code" value={newSubject.code} onChangeText={t => setNewSubject({...newSubject, code: t})} />
-          <TouchableOpacity style={[styles.button, { backgroundColor: colors.secondary }]} onPress={handleCreateSubject}>
-            <Text style={styles.buttonText}>Add Subject</Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Reference: Subjects</Text>
+        <View style={dynamicStyles.form}>
+          <TextInput style={dynamicStyles.input} placeholder="New Subject Name" placeholderTextColor={colors.textSecondary} value={newSubject.name} onChangeText={t => setNewSubject({...newSubject, name: t})} />
+          <TextInput style={dynamicStyles.input} placeholder="New Code" placeholderTextColor={colors.textSecondary} value={newSubject.code} onChangeText={t => setNewSubject({...newSubject, code: t})} />
+          <TouchableOpacity style={[dynamicStyles.button, { backgroundColor: colors.secondary }]} onPress={handleCreateSubject}>
+            <Text style={dynamicStyles.buttonText}>Add Subject</Text>
           </TouchableOpacity>
         </View>
         {subjects.map(s => (
-          <View key={s.id} style={styles.item}>
-            <Text style={styles.itemText}><Text style={styles.bold}>ID: {s.id}</Text> - {s.name} ({s.code})</Text>
+          <View key={s.id} style={dynamicStyles.item}>
+            <Text style={dynamicStyles.itemText}><Text style={dynamicStyles.bold}>ID: {s.id}</Text> - {s.name} ({s.code})</Text>
           </View>
         ))}
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Reference: Classes</Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Reference: Classes</Text>
         {classes.map(c => (
-          <View key={c.id} style={styles.item}>
-            <Text style={styles.itemText}><Text style={styles.bold}>ID: {c.id}</Text> - {c.name}</Text>
+          <View key={c.id} style={dynamicStyles.item}>
+            <Text style={dynamicStyles.itemText}><Text style={dynamicStyles.bold}>ID: {c.id}</Text> - {c.name}</Text>
           </View>
         ))}
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Academic Years</Text>
-        <View style={styles.form}>
-          <TextInput style={styles.input} placeholder="Year (e.g. 2024-2025)" value={newYear.name} onChangeText={t => setNewYear({...newYear, name: t})} />
-          <TouchableOpacity style={[styles.button, { backgroundColor: '#666' }]} onPress={handleCreateYear}>
-            <Text style={styles.buttonText}>Add Year</Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Academic Years</Text>
+        <View style={dynamicStyles.form}>
+          <TextInput style={dynamicStyles.input} placeholder="Year (e.g. 2024-2025)" placeholderTextColor={colors.textSecondary} value={newYear.name} onChangeText={t => setNewYear({...newYear, name: t})} />
+          <TouchableOpacity style={[dynamicStyles.button, { backgroundColor: colors.textSecondary }]} onPress={handleCreateYear}>
+            <Text style={dynamicStyles.buttonText}>Add Year</Text>
           </TouchableOpacity>
         </View>
         {years.map(y => (
-          <View key={y.id} style={styles.item}><Text style={styles.itemText}><Text style={styles.bold}>ID: {y.id}</Text> - {y.name}</Text></View>
+          <View key={y.id} style={dynamicStyles.item}><Text style={dynamicStyles.itemText}><Text style={dynamicStyles.bold}>ID: {y.id}</Text> - {y.name}</Text></View>
         ))}
       </View>
 
@@ -143,17 +147,17 @@ export default function AdminAcademicSetupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray100 },
+const styles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg },
-  section: { backgroundColor: colors.white, padding: spacing.md, borderRadius: 12, marginBottom: spacing.lg, elevation: 2 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: spacing.md },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg, color: colors.text },
+  section: { backgroundColor: colors.card, padding: spacing.md, borderRadius: 12, marginBottom: spacing.lg, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: spacing.md, color: colors.text },
   form: { marginBottom: spacing.md },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 10, marginBottom: 8, fontSize: 14 },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 10, marginBottom: 8, fontSize: 14, color: colors.text },
   button: { backgroundColor: colors.primary, padding: 12, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: colors.white, fontWeight: 'bold' },
-  item: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  itemText: { fontSize: 14 },
+  buttonText: { color: "#fff", fontWeight: 'bold' },
+  item: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
+  itemText: { fontSize: 14, color: colors.text },
   bold: { fontWeight: 'bold', color: colors.primary }
 });

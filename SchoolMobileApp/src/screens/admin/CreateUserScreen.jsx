@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
+import { spacing } from '../../styles';
 import adminService from '../../services/adminService';
 import studentManagementService from '../../services/studentManagementService';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function CreateUserScreen({ navigation }) {
+  const { colors } = useTheme();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -32,48 +34,61 @@ export default function CreateUserScreen({ navigation }) {
 
     setLoading(true);
     try {
-      // 1. Create Auth User
-      const authRes = await adminService.createUser({
-        first_name,
-        last_name,
-        email,
-        password,
-        role
-      });
-
-      if (!authRes.success) {
-        throw new Error(authRes.error);
-      }
-
-      const userId = authRes.data.id;
-
-      // 2. Create Role-specific Record
       if (role === 'Teacher') {
+        // Teacher creation handles both Auth and Teacher record in one backend call
         const teacherRes = await adminService.createTeacher({
           firstName: first_name,
           lastName: last_name,
           email,
-          password, // Usually teacher service handles its own hash but here we use auth userId
+          password,
           employeeId: formData.employeeId,
           specialization: formData.specialization,
-          userId
+          phone: 'N/A',
+          qualification: 'N/A',
+          experience: '0',
+          hireDate: new Date().toISOString().split('T')[0],
+          emergencyContact: 'N/A',
+          emergencyPhone: 'N/A',
         });
         if (!teacherRes.success) throw new Error(teacherRes.error);
-      } else if (role === 'Student') {
-        const studentRes = await studentManagementService.createStudent({
-          firstName: first_name,
-          lastName: last_name,
+      } else {
+        // 1. Create Auth User for other roles
+        const authRes = await adminService.createUser({
+          first_name,
+          last_name,
           email,
-          gender: formData.gender,
-          dateOfBirth: formData.dateOfBirth,
-          userId
+          password,
+          role
         });
-        if (!studentRes.success) throw new Error(studentRes.error);
+
+        if (!authRes.success) {
+          throw new Error(authRes.error);
+        }
+
+        const userId = authRes.data.id;
+
+        // 2. Create Student-specific record if needed
+        if (role === 'Student') {
+          const studentRes = await studentManagementService.createStudent({
+            firstName: first_name,
+            lastName: last_name,
+            email,
+            gender: formData.gender,
+            dateOfBirth: formData.dateOfBirth,
+            userId
+          });
+          if (!studentRes.success) throw new Error(studentRes.error);
+        }
       }
 
-      Alert.alert('Success', `${role} created successfully`, [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      if (Platform.OS === 'web') {
+        alert(`${role} created successfully`);
+        navigation.goBack();
+      } else {
+        Alert.alert('Success', `${role} created successfully`, [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
+      }
     } catch (error) {
       Alert.alert('Error', error.message || 'Operation failed');
     } finally {
@@ -81,99 +96,108 @@ export default function CreateUserScreen({ navigation }) {
     }
   };
 
+  const dynamicStyles = styles(colors);
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.form}>
-        <Text style={styles.label}>Role</Text>
-        <View style={styles.roleContainer}>
+    <ScrollView style={dynamicStyles.container}>
+      <View style={dynamicStyles.form}>
+        <Text style={dynamicStyles.label}>Role</Text>
+        <View style={dynamicStyles.roleContainer}>
           {roles.map((r) => (
             <TouchableOpacity
               key={r}
               style={[
-                styles.roleButton,
-                formData.role === r && styles.roleButtonActive
+                dynamicStyles.roleButton,
+                formData.role === r && dynamicStyles.roleButtonActive
               ]}
               onPress={() => setFormData({ ...formData, role: r })}
             >
               <Text style={[
-                styles.roleButtonText,
-                formData.role === r && styles.roleButtonTextActive
+                dynamicStyles.roleButtonText,
+                formData.role === r && dynamicStyles.roleButtonTextActive
               ]}>{r}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.label}>First Name</Text>
+        <Text style={dynamicStyles.label}>First Name</Text>
         <TextInput
-          style={styles.input}
+          style={dynamicStyles.input}
           value={formData.first_name}
           onChangeText={(text) => setFormData({ ...formData, first_name: text })}
           placeholder="First name"
+          placeholderTextColor={colors.textSecondary}
         />
 
-        <Text style={styles.label}>Last Name</Text>
+        <Text style={dynamicStyles.label}>Last Name</Text>
         <TextInput
-          style={styles.input}
+          style={dynamicStyles.input}
           value={formData.last_name}
           onChangeText={(text) => setFormData({ ...formData, last_name: text })}
           placeholder="Last name"
+          placeholderTextColor={colors.textSecondary}
         />
 
-        <Text style={styles.label}>Email Address</Text>
+        <Text style={dynamicStyles.label}>Email Address</Text>
         <TextInput
-          style={styles.input}
+          style={dynamicStyles.input}
           value={formData.email}
           onChangeText={(text) => setFormData({ ...formData, email: text })}
           placeholder="Email"
+          placeholderTextColor={colors.textSecondary}
           autoCapitalize="none"
         />
 
-        <Text style={styles.label}>Password</Text>
+        <Text style={dynamicStyles.label}>Password</Text>
         <TextInput
-          style={styles.input}
+          style={dynamicStyles.input}
           value={formData.password}
           onChangeText={(text) => setFormData({ ...formData, password: text })}
           placeholder="Password"
+          placeholderTextColor={colors.textSecondary}
           secureTextEntry
         />
 
         {formData.role === 'Teacher' && (
           <>
-            <Text style={styles.label}>Employee ID</Text>
+            <Text style={dynamicStyles.label}>Employee ID</Text>
             <TextInput
-              style={styles.input}
+              style={dynamicStyles.input}
               value={formData.employeeId}
               onChangeText={(text) => setFormData({ ...formData, employeeId: text })}
               placeholder="EMP123"
+              placeholderTextColor={colors.textSecondary}
             />
-            <Text style={styles.label}>Specialization</Text>
+            <Text style={dynamicStyles.label}>Specialization</Text>
             <TextInput
-              style={styles.input}
+              style={dynamicStyles.input}
               value={formData.specialization}
               onChangeText={(text) => setFormData({ ...formData, specialization: text })}
               placeholder="e.g. Mathematics"
+              placeholderTextColor={colors.textSecondary}
             />
           </>
         )}
 
         {formData.role === 'Student' && (
           <>
-            <Text style={styles.label}>Birth Date (YYYY-MM-DD)</Text>
+            <Text style={dynamicStyles.label}>Birth Date (YYYY-MM-DD)</Text>
             <TextInput
-              style={styles.input}
+              style={dynamicStyles.input}
               value={formData.dateOfBirth}
               onChangeText={(text) => setFormData({ ...formData, dateOfBirth: text })}
               placeholder="2010-01-01"
+              placeholderTextColor={colors.textSecondary}
             />
-            <Text style={styles.label}>Gender</Text>
-            <View style={styles.roleContainer}>
+            <Text style={dynamicStyles.label}>Gender</Text>
+            <View style={dynamicStyles.roleContainer}>
                 {['male', 'female'].map(g => (
                     <TouchableOpacity
                         key={g}
-                        style={[styles.roleButton, formData.gender === g && styles.roleButtonActive]}
+                        style={[dynamicStyles.roleButton, formData.gender === g && dynamicStyles.roleButtonActive]}
                         onPress={() => setFormData({...formData, gender: g})}
                     >
-                        <Text style={[styles.roleButtonText, formData.gender === g && styles.roleButtonTextActive]}>{g}</Text>
+                        <Text style={[dynamicStyles.roleButtonText, formData.gender === g && dynamicStyles.roleButtonTextActive]}>{g}</Text>
                     </TouchableOpacity>
                 ))}
             </View>
@@ -181,14 +205,14 @@ export default function CreateUserScreen({ navigation }) {
         )}
 
         <TouchableOpacity
-          style={styles.submitButton}
+          style={dynamicStyles.submitButton}
           onPress={handleCreate}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>Create Account</Text>
+            <Text style={dynamicStyles.submitButtonText}>Create Account</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -196,16 +220,16 @@ export default function CreateUserScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.white },
+const styles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   form: { padding: spacing.lg },
-  label: { fontSize: 14, fontWeight: '600', color: colors.black, marginBottom: spacing.xs, marginTop: spacing.md },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: spacing.md, fontSize: 16 },
+  label: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: spacing.xs, marginTop: spacing.md },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: spacing.md, fontSize: 16, color: colors.text },
   roleContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
   roleButton: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: 20, borderWidth: 1, borderColor: colors.primary },
   roleButtonActive: { backgroundColor: colors.primary },
   roleButtonText: { color: colors.primary, fontSize: 12, fontWeight: 'bold' },
-  roleButtonTextActive: { color: colors.white },
+  roleButtonTextActive: { color: "#fff" },
   submitButton: { backgroundColor: colors.primary, padding: spacing.md, borderRadius: 8, alignItems: 'center', marginTop: spacing.xl },
-  submitButtonText: { color: colors.white, fontSize: 16, fontWeight: 'bold' },
+  submitButtonText: { color: "#fff", fontSize: 16, fontWeight: 'bold' },
 });

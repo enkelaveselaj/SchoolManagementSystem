@@ -11,10 +11,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useStudent } from '../../hooks/useStudent';
 import { useAuth } from '../../hooks/useAuth';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function DashboardScreen({ navigation }) {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const { dashboardData, loading, fetchDashboard } = useStudent();
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -28,9 +30,11 @@ export default function DashboardScreen({ navigation }) {
     setRefreshing(false);
   };
 
+  const dynamicStyles = styles(colors);
+
   if (!dashboardData && loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={dynamicStyles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -47,15 +51,15 @@ export default function DashboardScreen({ navigation }) {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={dynamicStyles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.primary]} tintColor={colors.primary} />
       }
     >
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Welcome, {user?.firstName}!</Text>
-        <Text style={styles.date}>
+      <View style={dynamicStyles.header}>
+        <Text style={dynamicStyles.greeting}>Welcome, {user?.firstName}!</Text>
+        <Text style={dynamicStyles.date}>
           {new Date().toLocaleDateString('en-US', {
             weekday: 'long',
             month: 'long',
@@ -65,71 +69,71 @@ export default function DashboardScreen({ navigation }) {
       </View>
 
       {/* Quick Stats Grid */}
-      <View style={styles.statsGrid}>
+      <View style={dynamicStyles.statsGrid}>
         <TouchableOpacity
-          style={styles.statCard}
+          style={dynamicStyles.statCard}
           onPress={() => navigation.navigate('Attendance')}
         >
           <Ionicons name="checkmark-circle" size={32} color="#4CAF50" />
-          <Text style={styles.statValue}>{attendancePercentage}%</Text>
-          <Text style={styles.statLabel}>Attendance</Text>
+          <Text style={dynamicStyles.statValue}>{attendancePercentage}%</Text>
+          <Text style={dynamicStyles.statLabel}>Attendance</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.statCard}
+          style={dynamicStyles.statCard}
           onPress={() => navigation.navigate('Grades')}
         >
           <Ionicons name="document-text" size={32} color={colors.primary} />
-          <Text style={styles.statValue}>{averageGrade.toFixed(1)}</Text>
-          <Text style={styles.statLabel}>Avg Grade</Text>
+          <Text style={dynamicStyles.statValue}>{averageGrade.toFixed(1)}</Text>
+          <Text style={dynamicStyles.statLabel}>Avg Grade</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.statCard}
+          style={dynamicStyles.statCard}
           onPress={() => navigation.navigate('Assessments')}
         >
           <Ionicons name="list" size={32} color="#FF9800" />
-          <Text style={styles.statValue}>{pendingAssessments}</Text>
-          <Text style={styles.statLabel}>Assessments</Text>
+          <Text style={dynamicStyles.statValue}>{pendingAssessments}</Text>
+          <Text style={dynamicStyles.statLabel}>Assessments</Text>
         </TouchableOpacity>
       </View>
 
       {/* Quick Actions */}
-      <View style={styles.quickActions}>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Timetable')}>
+      <View style={dynamicStyles.quickActions}>
+        <TouchableOpacity style={dynamicStyles.actionBtn} onPress={() => navigation.navigate('Timetable')}>
             <Ionicons name="calendar" size={24} color={colors.primary} />
-            <Text style={styles.actionLabel}>Timetable</Text>
+            <Text style={dynamicStyles.actionLabel}>Timetable</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Announcements')}>
+        <TouchableOpacity style={dynamicStyles.actionBtn} onPress={() => navigation.navigate('Announcements')}>
             <Ionicons name="megaphone" size={24} color={colors.primary} />
-            <Text style={styles.actionLabel}>News</Text>
+            <Text style={dynamicStyles.actionLabel}>News</Text>
         </TouchableOpacity>
       </View>
 
       {/* Recent Grades Section */}
       {recentGrades && recentGrades.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Grades</Text>
+        <View style={dynamicStyles.section}>
+          <View style={dynamicStyles.sectionHeader}>
+            <Text style={dynamicStyles.sectionTitle}>Recent Grades</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Grades')}>
-              <Text style={styles.seeAll}>See All</Text>
+              <Text style={dynamicStyles.seeAll}>See All</Text>
             </TouchableOpacity>
           </View>
           {recentGrades.slice(0, 3).map((grade, index) => (
-            <View key={index} style={styles.gradeItem}>
-              <View style={styles.gradeInfo}>
-                <Text style={styles.subject}>{grade.subject}</Text>
-                <Text style={styles.gradeDate}>
+            <View key={index} style={dynamicStyles.gradeItem}>
+              <View style={dynamicStyles.gradeInfo}>
+                <Text style={dynamicStyles.subject}>{grade.subject}</Text>
+                <Text style={dynamicStyles.gradeDate}>
                   {new Date(grade.date).toLocaleDateString()}
                 </Text>
               </View>
               <View
                 style={[
-                  styles.gradeScore,
+                  dynamicStyles.gradeScore,
                   { backgroundColor: getGradeColor(grade.grade) },
                 ]}
               >
-                <Text style={styles.gradeScoreText}>{grade.grade}</Text>
+                <Text style={dynamicStyles.gradeScoreText}>{grade.grade}</Text>
               </View>
             </View>
           ))}
@@ -138,19 +142,19 @@ export default function DashboardScreen({ navigation }) {
 
       {/* Upcoming Classes Section */}
       {upcomingTimetable && upcomingTimetable.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today's Classes</Text>
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>Today's Classes</Text>
           {upcomingTimetable.map((session, index) => (
-            <View key={index} style={styles.classItem}>
+            <View key={index} style={dynamicStyles.classItem}>
               <Ionicons
                 name="time"
                 size={20}
                 color={colors.primary}
-                style={styles.classIcon}
+                style={dynamicStyles.classIcon}
               />
-              <View style={styles.classInfo}>
-                <Text style={styles.className}>{session.subject}</Text>
-                <Text style={styles.classTime}>
+              <View style={dynamicStyles.classInfo}>
+                <Text style={dynamicStyles.className}>{session.subject}</Text>
+                <Text style={dynamicStyles.classTime}>
                   {session.time} • Room {session.room}
                 </Text>
               </View>
@@ -161,26 +165,26 @@ export default function DashboardScreen({ navigation }) {
 
       {/* Latest Announcements Section */}
       {latestAnnouncements && latestAnnouncements.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Latest Announcements</Text>
+        <View style={dynamicStyles.section}>
+          <View style={dynamicStyles.sectionHeader}>
+            <Text style={dynamicStyles.sectionTitle}>Latest Announcements</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Announcements')}>
-              <Text style={styles.seeAll}>See All</Text>
+              <Text style={dynamicStyles.seeAll}>See All</Text>
             </TouchableOpacity>
           </View>
           {latestAnnouncements.slice(0, 3).map((announcement, index) => (
-            <View key={index} style={styles.announcementItem}>
+            <View key={index} style={dynamicStyles.announcementItem}>
               <Ionicons
                 name="megaphone"
                 size={20}
                 color="#2196F3"
-                style={styles.announcementIcon}
+                style={dynamicStyles.announcementIcon}
               />
-              <View style={styles.announcementInfo}>
-                <Text style={styles.announcementTitle}>
+              <View style={dynamicStyles.announcementInfo}>
+                <Text style={dynamicStyles.announcementTitle}>
                   {announcement.title}
                 </Text>
-                <Text style={styles.announcementDate}>
+                <Text style={dynamicStyles.announcementDate}>
                   {new Date(announcement.date).toLocaleDateString()}
                 </Text>
               </View>
@@ -200,31 +204,34 @@ function getGradeColor(grade) {
   return '#F44336';
 }
 
-const styles=StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray100 || '#F3F4F6',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   header: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xl,
     paddingBottom: spacing.lg,
     marginBottom: spacing.lg,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   greeting: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.white,
-    marginBottom: spacing.sm,
+    color: '#FFFFFF',
+    marginBottom: spacing.xs,
   },
   date: {
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.8)',
     fontSize: 14,
   },
   statsGrid: {
@@ -235,134 +242,144 @@ const styles=StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: spacing.md,
     alignItems: 'center',
-    marginHorizontal: spacing.sm,
+    marginHorizontal: spacing.xs,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 3,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: colors.gray900 || '#1F2937',
+    color: colors.text,
     marginTop: spacing.sm,
   },
   statLabel: {
-    fontSize: 12,
-    color: colors.gray600 || '#6B7280',
-    marginTop: spacing.xs,
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
-  quickActions: { flexDirection: 'row', paddingHorizontal: spacing.lg, gap: 10, marginBottom: 20 },
-  actionBtn: { flex: 1, backgroundColor: colors.white, padding: 15, borderRadius: 12, alignItems: 'center', elevation: 2 },
-  actionLabel: { fontSize: 12, fontWeight: 'bold', marginTop: 5, color: colors.gray900 },
+  quickActions: { flexDirection: 'row', paddingHorizontal: spacing.lg, gap: 12, marginBottom: 24 },
+  actionBtn: {
+    flex: 1,
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  actionLabel: { fontSize: 13, fontWeight: '700', marginTop: 8, color: colors.text },
   section: {
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.gray900 || '#1F2937',
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
   },
   seeAll: {
     color: colors.primary,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
   },
   gradeItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderRadius: 8,
+    backgroundColor: colors.card,
+    padding: 16,
+    marginBottom: 10,
+    borderRadius: 12,
   },
   gradeInfo: {
     flex: 1,
   },
   subject: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    color: colors.gray900 || '#1F2937',
+    color: colors.text,
   },
   gradeDate: {
     fontSize: 12,
-    color: colors.gray600 || '#6B7280',
-    marginTop: spacing.xs,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
   gradeScore: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
   gradeScoreText: {
-    color: colors.white,
-    fontSize: 18,
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: 'bold',
   },
   classItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderRadius: 8,
+    backgroundColor: colors.card,
+    padding: 16,
+    marginBottom: 10,
+    borderRadius: 12,
   },
   classIcon: {
-    marginRight: spacing.md,
+    marginRight: 16,
   },
   classInfo: {
     flex: 1,
   },
   className: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    color: colors.gray900 || '#1F2937',
+    color: colors.text,
   },
   classTime: {
     fontSize: 12,
-    color: colors.gray600 || '#6B7280',
-    marginTop: spacing.xs,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
   announcementItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderRadius: 8,
+    backgroundColor: colors.card,
+    padding: 16,
+    marginBottom: 10,
+    borderRadius: 12,
     borderLeftWidth: 4,
     borderLeftColor: '#2196F3',
   },
   announcementIcon: {
-    marginRight: spacing.md,
+    marginRight: 16,
   },
   announcementInfo: {
     flex: 1,
   },
   announcementTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    color: colors.gray900 || '#1F2937',
+    color: colors.text,
   },
   announcementDate: {
     fontSize: 12,
-    color: colors.gray600 || '#6B7280',
-    marginTop: spacing.xs,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
 });
-

@@ -1,5 +1,5 @@
-// CURRENT IP: 192.168.0.119
-const CURRENT_IP = '192.168.0.119';
+// CURRENT IP: 192.168.1.18
+const CURRENT_IP = '192.168.1.18';
 
 export const AUTH_SERVICE_URL = `http://${CURRENT_IP}:5001`;
 export const SCHOOL_SERVICE_URL = `http://${CURRENT_IP}:5002`;

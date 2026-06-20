@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { useStudent } from '../../hooks/useStudent';
 import AttendanceCard from '../../components/cards/AttendanceCard';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function AttendanceScreen() {
+  const { colors } = useTheme();
   const { attendance, loading, fetchAttendance, fetchAttendanceStats } = useStudent();
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState(null);
@@ -26,9 +28,11 @@ export default function AttendanceScreen() {
     setRefreshing(false);
   };
 
+  const dynamicStyles = styles(colors);
+
   if (loading && !attendance) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={dynamicStyles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -41,44 +45,44 @@ export default function AttendanceScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={dynamicStyles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.primary]} tintColor={colors.primary} />
       }
     >
       {/* Main Percentage Circle */}
-      <View style={styles.circleContainer}>
-        <View style={[styles.circle, { borderColor: getColorForPercentage(attendancePercentage) }]}>
-          <Text style={styles.circlePercentage}>{attendancePercentage}%</Text>
-          <Text style={styles.circleLabel}>Attendance</Text>
+      <View style={dynamicStyles.circleContainer}>
+        <View style={[dynamicStyles.circle, { borderColor: getColorForPercentage(attendancePercentage) }]}>
+          <Text style={dynamicStyles.circlePercentage}>{attendancePercentage}%</Text>
+          <Text style={dynamicStyles.circleLabel}>Attendance</Text>
         </View>
       </View>
 
       {/* Stats Cards */}
-      <View style={styles.statsContainer}>
+      <View style={dynamicStyles.statsContainer}>
         <AttendanceCard label="Present" value={presentDays} color="#4CAF50" />
         <AttendanceCard label="Absent" value={absentDays} color="#F44336" />
       </View>
 
       {/* Attendance History */}
       {records.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Attendance</Text>
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>Recent Attendance</Text>
           {records.slice(0, 10).map((record, index) => (
-            <View key={index} style={styles.recordItem}>
-              <Text style={styles.recordDate}>
+            <View key={index} style={dynamicStyles.recordItem}>
+              <Text style={dynamicStyles.recordDate}>
                 {new Date(record.date).toLocaleDateString()}
               </Text>
               <View
                 style={[
-                  styles.statusBadge,
+                  dynamicStyles.statusBadge,
                   {
                     backgroundColor:
                       record.status === 'Present' ? '#4CAF50' : '#F44336',
                   },
                 ]}
               >
-                <Text style={styles.statusText}>{record.status}</Text>
+                <Text style={dynamicStyles.statusText}>{record.status}</Text>
               </View>
             </View>
           ))}
@@ -95,76 +99,84 @@ function getColorForPercentage(percentage) {
   return '#F44336';
 }
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray100 || '#F3F4F6',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   circleContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
   circle: {
     width: 200,
     height: 200,
     borderRadius: 100,
-    borderWidth: 8,
+    borderWidth: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   circlePercentage: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: colors.text,
   },
   circleLabel: {
     fontSize: 16,
-    color: colors.gray600 || '#6B7280',
+    color: colors.textSecondary,
     marginTop: 8,
   },
   statsContainer: {
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
+    paddingTop: spacing.lg,
   },
   section: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: spacing.md,
-    color: colors.gray900 || '#1F2937',
+    color: colors.text,
   },
   recordItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: spacing.md,
     marginBottom: spacing.sm,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   recordDate: {
-    fontSize: 14,
-    color: colors.gray900 || '#1F2937',
-  },
-  statusBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 4,
-  },
-  statusText: {
-    color: colors.white,
-    fontSize: 12,
+    fontSize: 15,
+    color: colors.text,
     fontWeight: '600',
   },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 });
-

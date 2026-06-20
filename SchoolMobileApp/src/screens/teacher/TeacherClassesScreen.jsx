@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import teacherService from '../../services/teacherService';
 import academicService from '../../services/academicService';
 import schoolService from '../../services/schoolService';
 import { useAuthStore } from '../../store/authStore';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function TeacherClassesScreen({ navigation }) {
+  const { colors } = useTheme();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const user = useAuthStore(state => state.user);
@@ -53,32 +55,34 @@ export default function TeacherClassesScreen({ navigation }) {
     setLoading(false);
   };
 
+  const dynamicStyles = styles(colors);
+
   const renderClassItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.card}
+      style={dynamicStyles.card}
       onPress={() => navigation.navigate('MarkAttendance', { classId: item.classId, sectionId: item.sectionId })}
     >
-      <View style={styles.info}>
-        <Text style={styles.className}>{item.className}</Text>
-        <Text style={styles.subject}>{item.subjectName}</Text>
-        <Text style={styles.ids}>Sub ID: {item.subjectId} | Class ID: {item.classId}</Text>
+      <View style={dynamicStyles.info}>
+        <Text style={dynamicStyles.className}>{item.className}</Text>
+        <Text style={dynamicStyles.subject}>{item.subjectName}</Text>
+        <Text style={dynamicStyles.ids}>Sub ID: {item.subjectId} | Class ID: {item.classId}</Text>
       </View>
-      <View style={styles.badge}><Text style={styles.badgeText}>Open</Text></View>
+      <View style={dynamicStyles.badge}><Text style={dynamicStyles.badgeText}>Open</Text></View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Classes</Text>
-        <TouchableOpacity onPress={loadClasses}><Text style={{color: colors.primary}}>Refresh</Text></TouchableOpacity>
+    <View style={dynamicStyles.container}>
+      <View style={dynamicStyles.header}>
+        <Text style={dynamicStyles.title}>My Classes</Text>
+        <TouchableOpacity onPress={loadClasses}><Text style={{color: colors.primary, fontWeight: '600'}}>Refresh</Text></TouchableOpacity>
       </View>
       {loading ? <ActivityIndicator size="large" color={colors.primary} /> : (
         <FlatList
           data={classes}
           renderItem={renderClassItem}
           keyExtractor={(item, index) => index.toString()}
-          ListEmptyComponent={<Text style={styles.empty}>No classes assigned to you yet.</Text>}
+          ListEmptyComponent={<Text style={dynamicStyles.empty}>No classes assigned to you yet.</Text>}
           contentContainerStyle={{ paddingBottom: 20 }}
         />
       )}
@@ -86,16 +90,28 @@ export default function TeacherClassesScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray100, padding: spacing.lg },
+const styles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
-  title: { fontSize: 24, fontWeight: 'bold' },
-  card: { backgroundColor: colors.white, padding: spacing.md, borderRadius: 12, marginBottom: spacing.md, flexDirection: 'row', alignItems: 'center', elevation: 2 },
+  title: { fontSize: 24, fontWeight: 'bold', color: colors.text },
+  card: {
+    backgroundColor: colors.card,
+    padding: spacing.md,
+    borderRadius: 16,
+    marginBottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
   info: { flex: 1 },
-  className: { fontSize: 18, fontWeight: 'bold' },
-  subject: { color: colors.gray500, marginTop: 4, fontSize: 14 },
-  ids: { color: colors.gray500, fontSize: 10, marginTop: 4 },
-  badge: { backgroundColor: colors.primary, padding: 8, borderRadius: 8 },
-  badgeText: { color: colors.white, fontSize: 12, fontWeight: 'bold' },
-  empty: { textAlign: 'center', marginTop: 20, color: colors.gray500 }
+  className: { fontSize: 18, fontWeight: 'bold', color: colors.text },
+  subject: { color: colors.textSecondary, marginTop: 4, fontSize: 14, fontWeight: '500' },
+  ids: { color: colors.textSecondary, fontSize: 10, marginTop: 4 },
+  badge: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  badgeText: { color: "#FFFFFF", fontSize: 12, fontWeight: 'bold' },
+  empty: { textAlign: 'center', marginTop: 20, color: colors.textSecondary }
 });

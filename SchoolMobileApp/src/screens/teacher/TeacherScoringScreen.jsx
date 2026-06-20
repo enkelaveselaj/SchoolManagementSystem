@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import academicService from '../../services/academicService';
 import studentManagementService from '../../services/studentManagementService';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function TeacherScoringScreen({ route }) {
+  const { colors } = useTheme();
   const { assessmentId, assessmentTitle, subjectId } = route.params;
   const [students, setStudents] = useState([]);
   const [scores, setScores] = useState({}); // { studentId: score }
@@ -53,46 +55,61 @@ export default function TeacherScoringScreen({ route }) {
     }
   };
 
+  const dynamicStyles = styles(colors);
+
   const renderItem = ({ item }) => (
-    <View style={styles.item}>
-      <Text style={styles.name}>{item.firstName} {item.lastName} (ID: {item.id})</Text>
-      <View style={styles.scoreRow}>
+    <View style={dynamicStyles.item}>
+      <Text style={dynamicStyles.name}>{item.firstName} {item.lastName} (ID: {item.id})</Text>
+      <View style={dynamicStyles.scoreRow}>
         <TextInput
-          style={styles.scoreInput}
+          style={dynamicStyles.scoreInput}
           placeholder="Score"
+          placeholderTextColor={colors.textSecondary}
           value={scores[item.id]}
           onChangeText={t => setScores({...scores, [item.id]: t})}
           keyboardType="numeric"
         />
-        <TouchableOpacity style={styles.saveBtn} onPress={() => handleSaveScore(item.id)}>
-          <Text style={styles.saveBtnText}>Save</Text>
+        <TouchableOpacity style={dynamicStyles.saveBtn} onPress={() => handleSaveScore(item.id)}>
+          <Text style={dynamicStyles.saveBtnText}>Save</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Scoring: {assessmentTitle}</Text>
+    <View style={dynamicStyles.container}>
+      <Text style={dynamicStyles.title}>Scoring: {assessmentTitle}</Text>
       {loading ? <ActivityIndicator size="large" color={colors.primary} /> : (
         <FlatList
           data={students}
           keyExtractor={item => item.id.toString()}
           renderItem={renderItem}
-          ListEmptyComponent={<Text>No students found</Text>}
+          ListEmptyComponent={<Text style={dynamicStyles.empty}>No students found</Text>}
+          contentContainerStyle={{ paddingBottom: 20 }}
         />
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray100, padding: spacing.lg },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: spacing.lg },
-  item: { backgroundColor: colors.white, padding: spacing.md, borderRadius: 12, marginBottom: spacing.md },
-  name: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
+const styles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
+  title: { fontSize: 20, fontWeight: 'bold', marginBottom: spacing.lg, color: colors.text },
+  item: {
+    backgroundColor: colors.card,
+    padding: spacing.md,
+    borderRadius: 16,
+    marginBottom: 12,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  name: { fontSize: 16, fontWeight: '600', marginBottom: 12, color: colors.text },
   scoreRow: { flexDirection: 'row', gap: 10 },
-  scoreInput: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 8 },
-  saveBtn: { backgroundColor: colors.primary, paddingHorizontal: 16, justifyContent: 'center', borderRadius: 8 },
-  saveBtnText: { color: colors.white, fontWeight: 'bold' }
+  scoreInput: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 10, color: colors.text },
+  saveBtn: { backgroundColor: colors.primary, paddingHorizontal: 20, justifyContent: 'center', borderRadius: 8 },
+  saveBtnText: { color: "#FFFFFF", fontWeight: 'bold' },
+  empty: { textAlign: 'center', marginTop: 20, color: colors.textSecondary }
 });

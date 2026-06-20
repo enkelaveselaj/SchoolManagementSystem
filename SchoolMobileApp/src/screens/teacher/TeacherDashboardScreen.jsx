@@ -1,11 +1,48 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import { useAuthStore } from '../../store/authStore';
+import teacherService from '../../services/teacherService';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function TeacherDashboardScreen({ navigation }) {
   const user = useAuthStore(state => state.user);
+  const { colors } = useTheme();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [teacherData, setTeacherData] = useState(null);
+  const [classes, setClasses] = useState([]);
+
+  const fetchData = async () => {
+    if (!user?.id) return;
+    try {
+      const profileRes = await teacherService.getTeacherByUserId(user.id);
+      if (profileRes.success) {
+        setTeacherData(profileRes.data);
+        const classesRes = await teacherService.getTeacherClasses(profileRes.data.id);
+        if (classesRes.success) {
+          setClasses(classesRes.data);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch teacher dashboard data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [user?.id]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  const dynamicStyles = styles(colors);
 
   const teacherModules = [
     {
@@ -39,56 +76,80 @@ export default function TeacherDashboardScreen({ navigation }) {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.welcomeText}>Teacher Portal</Text>
-          <Text style={styles.subHeaderText}>Hello, {user?.firstName}</Text>
+    <SafeAreaView style={dynamicStyles.container}>
+      <ScrollView
+        contentContainerStyle={dynamicStyles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+        }
+      >
+        <View style={dynamicStyles.header}>
+          <Text style={dynamicStyles.welcomeText}>Teacher Portal</Text>
+          <Text style={dynamicStyles.subHeaderText}>Hello, {user?.firstName} {user?.lastName}</Text>
+          {teacherData?.specialization && (
+            <Text style={dynamicStyles.specializationText}>{teacherData.specialization} Specialist</Text>
+          )}
         </View>
 
-        <View style={styles.grid}>
+        <View style={dynamicStyles.grid}>
           {teacherModules.map((module, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.moduleCard}
+              style={dynamicStyles.moduleCard}
               onPress={module.action}
             >
-              <View style={[styles.iconContainer, { backgroundColor: module.color }]}>
-                <Ionicons name={module.icon} size={28} color={colors.white} />
+              <View style={[dynamicStyles.iconContainer, { backgroundColor: module.color }]}>
+                <Ionicons name={module.icon} size={28} color="#FFFFFF" />
               </View>
-              <View style={styles.moduleTextContainer}>
-                <Text style={styles.moduleTitle}>{module.title}</Text>
-                <Text style={styles.moduleDescription}>{module.description}</Text>
+              <View style={dynamicStyles.moduleTextContainer}>
+                <Text style={dynamicStyles.moduleTitle}>{module.title}</Text>
+                <Text style={dynamicStyles.moduleDescription}>
+                  {module.title === 'My Classes' ? `${classes.length} assigned classes` : module.description}
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.gray500} />
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
 
-        <View style={styles.upcomingSection}>
-          <Text style={styles.sectionTitle}>Next Class</Text>
-          <View style={styles.nextClassCard}>
-            <View style={styles.timeLabel}>
-              <Text style={styles.timeText}>10:30 AM</Text>
+        <View style={dynamicStyles.upcomingSection}>
+          <Text style={dynamicStyles.sectionTitle}>Assigned Classes</Text>
+          {loading ? (
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
+          ) : classes.length > 0 ? (
+            classes.map((cls, index) => (
+              <View key={cls.id || index} style={[dynamicStyles.nextClassCard, { marginBottom: spacing.sm }]}>
+                <View style={dynamicStyles.timeLabel}>
+                  <Text style={dynamicStyles.timeText}>Class</Text>
+                  <Text style={dynamicStyles.timeSubText}>ID: {cls.classId}</Text>
+                </View>
+                <View style={dynamicStyles.classDetails}>
+                  <Text style={dynamicStyles.className}>Subject ID: {cls.subjectId}</Text>
+                  <Text style={dynamicStyles.classRoom}>Assigned for current year</Text>
+                </View>
+                <TouchableOpacity
+                  style={dynamicStyles.attendanceButton}
+                  onPress={() => navigation.navigate('TeacherClasses', { classId: cls.classId })}
+                >
+                  <Text style={dynamicStyles.attendanceButtonText}>View</Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          ) : (
+            <View style={dynamicStyles.emptyState}>
+              <Text style={dynamicStyles.emptyStateText}>No classes assigned yet.</Text>
             </View>
-            <View style={styles.classDetails}>
-              <Text style={styles.className}>Mathematics - Grade 10A</Text>
-              <Text style={styles.classRoom}>Room 204 • 28 Students</Text>
-            </View>
-            <TouchableOpacity style={styles.attendanceButton}>
-              <Text style={styles.attendanceButtonText}>Mark</Text>
-            </TouchableOpacity>
-          </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray100,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,
@@ -100,12 +161,18 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.text,
   },
   subHeaderText: {
     fontSize: 16,
-    color: colors.gray500,
+    color: colors.textSecondary,
     marginTop: spacing.xs,
+  },
+  specializationText: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '600',
+    marginTop: 4,
   },
   grid: {
     gap: spacing.md,
@@ -113,7 +180,7 @@ const styles = StyleSheet.create({
   moduleCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: spacing.md,
     borderRadius: 16,
     shadowColor: '#000',
@@ -136,11 +203,11 @@ const styles = StyleSheet.create({
   moduleTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.black,
+    color: colors.text,
   },
   moduleDescription: {
     fontSize: 12,
-    color: colors.gray500,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   upcomingSection: {
@@ -150,10 +217,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: spacing.md,
-    color: colors.black,
+    color: colors.text,
   },
   nextClassCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: spacing.md,
     borderRadius: 16,
     flexDirection: 'row',
@@ -164,11 +231,16 @@ const styles = StyleSheet.create({
   timeLabel: {
     paddingRight: spacing.md,
     borderRightWidth: 1,
-    borderRightColor: colors.gray100,
+    borderRightColor: colors.border,
+    alignItems: 'center',
   },
   timeText: {
     fontWeight: 'bold',
     color: colors.primary,
+  },
+  timeSubText: {
+    fontSize: 10,
+    color: colors.textSecondary,
   },
   classDetails: {
     flex: 1,
@@ -177,11 +249,11 @@ const styles = StyleSheet.create({
   className: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.text,
   },
   classRoom: {
     fontSize: 12,
-    color: colors.gray500,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   attendanceButton: {
@@ -195,4 +267,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 12,
   },
+  emptyState: {
+    backgroundColor: colors.card,
+    padding: spacing.xl,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    color: colors.textSecondary,
+  }
 });

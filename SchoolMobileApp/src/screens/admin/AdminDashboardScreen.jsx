@@ -1,11 +1,54 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import { useAuthStore } from '../../store/authStore';
+import adminService from '../../services/adminService';
+import schoolService from '../../services/schoolService';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function AdminDashboardScreen({ navigation }) {
   const user = useAuthStore(state => state.user);
+  const { colors } = useTheme();
+  const [stats, setStats] = useState({
+    students: 0,
+    teachers: 0,
+    classes: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchStats = async () => {
+    try {
+      const [studentsRes, teachersRes, classesRes] = await Promise.all([
+        adminService.getStudents(),
+        adminService.getTeachers(),
+        schoolService.getClasses()
+      ]);
+
+      setStats({
+        students: studentsRes.success ? studentsRes.data.length : 0,
+        teachers: teachersRes.success ? teachersRes.data.length : 0,
+        classes: classesRes.success ? classesRes.data.length : 0
+      });
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchStats();
+  };
+
+  const dynamicStyles = styles(colors);
 
   const adminModules = [
     {
@@ -53,46 +96,63 @@ export default function AdminDashboardScreen({ navigation }) {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.welcomeText}>Admin Dashboard</Text>
-          <Text style={styles.subHeaderText}>Welcome back, {user?.firstName}</Text>
+    <SafeAreaView style={dynamicStyles.container}>
+      <ScrollView
+        contentContainerStyle={dynamicStyles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+        }
+      >
+        <View style={dynamicStyles.header}>
+          <Text style={dynamicStyles.welcomeText}>Admin Dashboard</Text>
+          <Text style={dynamicStyles.subHeaderText}>Welcome back, {user?.firstName}</Text>
         </View>
 
-        <View style={styles.grid}>
+        <View style={dynamicStyles.grid}>
           {adminModules.map((module, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.moduleCard}
+              style={dynamicStyles.moduleCard}
               onPress={module.action}
             >
-              <View style={[styles.iconContainer, { backgroundColor: module.color }]}>
-                <Ionicons name={module.icon} size={28} color={colors.white} />
+              <View style={[dynamicStyles.iconContainer, { backgroundColor: module.color }]}>
+                <Ionicons name={module.icon} size={28} color="#FFFFFF" />
               </View>
-              <View style={styles.moduleTextContainer}>
-                <Text style={styles.moduleTitle}>{module.title}</Text>
-                <Text style={styles.moduleDescription}>{module.description}</Text>
+              <View style={dynamicStyles.moduleTextContainer}>
+                <Text style={dynamicStyles.moduleTitle}>{module.title}</Text>
+                <Text style={dynamicStyles.moduleDescription}>{module.description}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.gray500} />
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
 
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>Quick Stats</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>1,240</Text>
-              <Text style={styles.statLabel}>Students</Text>
+        <View style={dynamicStyles.statsSection}>
+          <Text style={dynamicStyles.sectionTitle}>Quick Stats</Text>
+          <View style={dynamicStyles.statsRow}>
+            <View style={dynamicStyles.statBox}>
+              {loading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Text style={dynamicStyles.statNumber}>{stats.students}</Text>
+              )}
+              <Text style={dynamicStyles.statLabel}>Students</Text>
             </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>85</Text>
-              <Text style={styles.statLabel}>Teachers</Text>
+            <View style={dynamicStyles.statBox}>
+              {loading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Text style={dynamicStyles.statNumber}>{stats.teachers}</Text>
+              )}
+              <Text style={dynamicStyles.statLabel}>Teachers</Text>
             </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>42</Text>
-              <Text style={styles.statLabel}>Classes</Text>
+            <View style={dynamicStyles.statBox}>
+              {loading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Text style={dynamicStyles.statNumber}>{stats.classes}</Text>
+              )}
+              <Text style={dynamicStyles.statLabel}>Classes</Text>
             </View>
           </View>
         </View>
@@ -101,10 +161,10 @@ export default function AdminDashboardScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray100,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,
@@ -116,11 +176,11 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.text,
   },
   subHeaderText: {
     fontSize: 16,
-    color: colors.gray500,
+    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   grid: {
@@ -129,7 +189,7 @@ const styles = StyleSheet.create({
   moduleCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: spacing.md,
     borderRadius: 16,
     shadowColor: '#000',
@@ -152,11 +212,11 @@ const styles = StyleSheet.create({
   moduleTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.black,
+    color: colors.text,
   },
   moduleDescription: {
     fontSize: 12,
-    color: colors.gray500,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   statsSection: {
@@ -166,7 +226,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: spacing.md,
-    color: colors.black,
+    color: colors.text,
   },
   statsRow: {
     flexDirection: 'row',
@@ -175,7 +235,7 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: spacing.md,
     borderRadius: 12,
     alignItems: 'center',
@@ -187,7 +247,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: colors.gray500,
+    color: colors.textSecondary,
     marginTop: 4,
   },
 });

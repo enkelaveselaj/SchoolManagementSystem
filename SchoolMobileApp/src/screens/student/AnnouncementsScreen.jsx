@@ -9,10 +9,12 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import { academicApi as api } from '../../services/api';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function AnnouncementsScreen() {
+  const { colors } = useTheme();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -44,9 +46,11 @@ export default function AnnouncementsScreen() {
     a.content.toLowerCase().includes(searchText.toLowerCase())
   );
 
+  const dynamicStyles = styles(colors);
+
   if (loading && !announcements.length) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={dynamicStyles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -54,44 +58,44 @@ export default function AnnouncementsScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={dynamicStyles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.primary]} tintColor={colors.primary} />
       }
     >
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={colors.gray500 || '#9CA3AF'} />
+      <View style={dynamicStyles.searchContainer}>
+        <Ionicons name="search" size={20} color={colors.textSecondary} />
         <TextInput
-          style={styles.searchInput}
+          style={dynamicStyles.searchInput}
           placeholder="Search announcements..."
-          placeholderTextColor={colors.gray500 || '#9CA3AF'}
+          placeholderTextColor={colors.textSecondary}
           value={searchText}
           onChangeText={setSearchText}
         />
       </View>
 
       {/* Announcements List */}
-      <View style={styles.content}>
+      <View style={dynamicStyles.content}>
         {filteredAnnouncements.length > 0 ? (
           filteredAnnouncements.map((announcement) => (
-            <View key={announcement.id} style={styles.announcementCard}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.title}>{announcement.title}</Text>
-                <Text style={styles.date}>
+            <View key={announcement.id} style={dynamicStyles.announcementCard}>
+              <View style={dynamicStyles.cardHeader}>
+                <Text style={dynamicStyles.title}>{announcement.title}</Text>
+                <Text style={dynamicStyles.date}>
                   {new Date(announcement.date).toLocaleDateString()}
                 </Text>
               </View>
-              <Text style={styles.content}>{announcement.content}</Text>
+              <Text style={dynamicStyles.textContent}>{announcement.content}</Text>
               {announcement.type && (
-                <View style={styles.typeTag}>
-                  <Text style={styles.typeText}>{announcement.type}</Text>
+                <View style={dynamicStyles.typeTag}>
+                  <Text style={dynamicStyles.typeText}>{announcement.type}</Text>
                 </View>
               )}
             </View>
           ))
         ) : (
-          <Text style={styles.emptyText}>
+          <Text style={dynamicStyles.emptyText}>
             {searchText ? 'No announcements found' : 'No announcements yet'}
           </Text>
         )}
@@ -100,44 +104,51 @@ export default function AnnouncementsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray100 || '#F3F4F6',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     marginHorizontal: spacing.lg,
     marginVertical: spacing.lg,
     paddingHorizontal: spacing.md,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.gray300 || '#E5E7EB',
+    borderColor: colors.border,
   },
   searchInput: {
     flex: 1,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     fontSize: 14,
+    color: colors.text,
   },
   content: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,
   },
   announcementCard: {
-    backgroundColor: colors.white,
-    borderRadius: 8,
+    backgroundColor: colors.card,
+    borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.md,
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -147,36 +158,37 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.gray900 || '#1F2937',
+    fontWeight: '700',
+    color: colors.text,
     flex: 1,
   },
   date: {
     fontSize: 12,
-    color: colors.gray600 || '#6B7280',
+    color: colors.textSecondary,
+    marginLeft: spacing.sm,
   },
-  content: {
+  textContent: {
     fontSize: 14,
-    color: colors.gray700 || '#374151',
+    color: colors.text,
     lineHeight: 20,
     marginBottom: spacing.sm,
   },
   typeTag: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 6,
   },
   typeText: {
-    color: colors.white,
+    color: colors.primary,
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
   emptyText: {
     textAlign: 'center',
-    color: colors.gray600 || '#6B7280',
+    color: colors.textSecondary,
     marginTop: spacing.lg,
   },
 });
-

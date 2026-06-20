@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import academicService from '../../services/academicService';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function StudentAssessmentsScreen() {
+  const { colors } = useTheme();
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,34 +20,47 @@ export default function StudentAssessmentsScreen() {
     setLoading(false);
   };
 
+  const dynamicStyles = styles(colors);
+
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.titleText}>{item.title}</Text>
-      <Text style={styles.subText}>{item.type} | Max Marks: {item.maxMarks}</Text>
-      <Text style={styles.dateText}>Subject ID: {item.subjectId}</Text>
+    <View style={dynamicStyles.card}>
+      <Text style={dynamicStyles.titleText}>{item.title}</Text>
+      <Text style={dynamicStyles.subText}>{item.type} | Max Marks: {item.maxMarks}</Text>
+      <Text style={dynamicStyles.dateText}>Subject ID: {item.subjectId}</Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Upcoming Assessments</Text>
+    <View style={dynamicStyles.container}>
+      <Text style={dynamicStyles.header}>Upcoming Assessments</Text>
       {loading ? <ActivityIndicator size="large" color={colors.primary} /> : (
         <FlatList
           data={assessments}
           renderItem={renderItem}
           keyExtractor={item => item.id.toString()}
-          ListEmptyComponent={<Text>No assessments available.</Text>}
+          ListEmptyComponent={<Text style={dynamicStyles.emptyText}>No assessments available.</Text>}
         />
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray100, padding: spacing.lg },
-  header: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg },
-  card: { backgroundColor: colors.white, padding: spacing.md, borderRadius: 12, marginBottom: spacing.md, elevation: 2 },
-  titleText: { fontSize: 18, fontWeight: 'bold' },
-  subText: { color: colors.gray500, marginTop: 4 },
-  dateText: { fontSize: 12, color: colors.primary, marginTop: 8, fontWeight: '600' }
+const styles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
+  header: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg, color: colors.text },
+  card: {
+    backgroundColor: colors.card,
+    padding: spacing.md,
+    borderRadius: 16,
+    marginBottom: spacing.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  titleText: { fontSize: 18, fontWeight: 'bold', color: colors.text },
+  subText: { color: colors.textSecondary, marginTop: 4 },
+  dateText: { fontSize: 12, color: colors.primary, marginTop: 8, fontWeight: '600' },
+  emptyText: { textAlign: 'center', color: colors.textSecondary, marginTop: 20 }
 });

@@ -11,12 +11,22 @@ import AnnouncementsScreen from '../screens/student/AnnouncementsScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import { colors } from '../styles';
 
+import { useTheme } from '../hooks/useTheme';
+
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 function StudentHomeStack() {
+  const { colors } = useTheme();
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.card },
+        headerTintColor: colors.text,
+        headerTitleStyle: { fontWeight: 'bold' },
+        cardStyle: { backgroundColor: colors.background }
+      }}
+    >
       <Stack.Screen name="StudentDashboard" component={DashboardScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Grades" component={GradesScreen} />
       <Stack.Screen name="Attendance" component={AttendanceScreen} />
@@ -28,6 +38,7 @@ function StudentHomeStack() {
 }
 
 export default function StudentNavigator(){
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
         screenOptions={({ route }) => ({
@@ -38,7 +49,11 @@ export default function StudentNavigator(){
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.gray500,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+        },
         headerShown: false,
       })}
     >

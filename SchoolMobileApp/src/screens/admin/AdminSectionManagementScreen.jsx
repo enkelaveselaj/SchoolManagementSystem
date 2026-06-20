@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import schoolService from '../../services/schoolService';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function AdminSectionManagementScreen() {
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
   const [classes, setClasses] = useState([]);
   const [sections, setSections] = useState([]);
@@ -34,40 +36,58 @@ export default function AdminSectionManagementScreen() {
     });
     if (res.success) {
       Alert.alert('Success', 'Section created');
-      setFormData({ classId: '', name: '', capacity: '30', roomNumber: '' });
+      setFormData({ classId: classes.length > 0 ? classes[0].id.toString() : '', name: '', capacity: '30', roomNumber: '' });
       loadData();
     } else {
       Alert.alert('Error', res.error);
     }
   };
 
-  const getClassName = (id) => classes.find(c => c.id === id)?.name || 'Unknown';
+  const getClassName = (id) => classes.find(c => c.id === id)?.name || `Class ID: ${id}`;
+
+  const dynamicStyles = styles(colors);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Section Management</Text>
+    <ScrollView style={dynamicStyles.container} contentContainerStyle={dynamicStyles.content}>
+      <Text style={dynamicStyles.title}>Section Management</Text>
 
-      <View style={styles.section}>
-        <Text style={styles.label}>Class ID</Text>
-        <TextInput style={styles.input} placeholder="Class ID" value={formData.classId} onChangeText={t => setFormData({...formData, classId: t})} keyboardType="numeric" />
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.label}>Class ID</Text>
+        <TextInput
+          style={dynamicStyles.input}
+          placeholder="Enter a valid Class ID"
+          placeholderTextColor={colors.textSecondary}
+          value={formData.classId}
+          onChangeText={t => setFormData({...formData, classId: t})}
+          keyboardType="numeric"
+        />
 
-        <Text style={styles.label}>Section Name</Text>
-        <TextInput style={styles.input} placeholder="e.g. Section A" value={formData.name} onChangeText={t => setFormData({...formData, name: t})} />
+        {classes.length > 0 && (
+          <View style={dynamicStyles.infoBox}>
+            <Text style={dynamicStyles.infoText}>Available Classes (IDs):</Text>
+            {classes.map(c => (
+              <Text key={c.id} style={dynamicStyles.infoText}>• {c.name} (ID: {c.id})</Text>
+            ))}
+          </View>
+        )}
 
-        <Text style={styles.label}>Capacity</Text>
-        <TextInput style={styles.input} placeholder="30" value={formData.capacity} onChangeText={t => setFormData({...formData, capacity: t})} keyboardType="numeric" />
+        <Text style={dynamicStyles.label}>Section Name</Text>
+        <TextInput style={dynamicStyles.input} placeholder="e.g. Section A" placeholderTextColor={colors.textSecondary} value={formData.name} onChangeText={t => setFormData({...formData, name: t})} />
 
-        <TouchableOpacity style={styles.button} onPress={handleCreate}>
-          <Text style={styles.buttonText}>Add Section</Text>
+        <Text style={dynamicStyles.label}>Capacity</Text>
+        <TextInput style={dynamicStyles.input} placeholder="30" placeholderTextColor={colors.textSecondary} value={formData.capacity} onChangeText={t => setFormData({...formData, capacity: t})} keyboardType="numeric" />
+
+        <TouchableOpacity style={dynamicStyles.button} onPress={handleCreate}>
+          <Text style={dynamicStyles.buttonText}>Add Section</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.list}>
-        <Text style={styles.sectionTitle}>Existing Sections</Text>
+      <View style={dynamicStyles.list}>
+        <Text style={dynamicStyles.sectionTitle}>Existing Sections</Text>
         {sections.map(s => (
-          <View key={s.id} style={styles.item}>
-            <Text style={styles.itemText}>{getClassName(s.classId)} - {s.name} (ID: {s.id})</Text>
-            <Text style={styles.itemSub}>Capacity: {s.capacity} | Room: {s.roomNumber || 'N/A'}</Text>
+          <View key={s.id} style={dynamicStyles.item}>
+            <Text style={dynamicStyles.itemText}>{getClassName(s.classId)} - {s.name} (ID: {s.id})</Text>
+            <Text style={dynamicStyles.itemSub}>Capacity: {s.capacity} | Room: {s.roomNumber || 'N/A'}</Text>
           </View>
         ))}
       </View>
@@ -75,18 +95,20 @@ export default function AdminSectionManagementScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray100 },
+const styles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg },
-  section: { backgroundColor: colors.white, padding: spacing.md, borderRadius: 12, marginBottom: spacing.lg },
-  label: { fontSize: 14, fontWeight: 'bold', marginBottom: 4 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 10, marginBottom: 12 },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg, color: colors.text },
+  section: { backgroundColor: colors.card, padding: spacing.md, borderRadius: 12, marginBottom: spacing.lg },
+  label: { fontSize: 14, fontWeight: 'bold', marginBottom: 4, color: colors.textSecondary },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 10, marginBottom: 12, color: colors.text },
+  infoBox: { backgroundColor: colors.background, padding: 10, borderRadius: 8, marginBottom: 12 },
+  infoText: { fontSize: 12, color: colors.textSecondary },
   button: { backgroundColor: colors.primary, padding: 12, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: colors.white, fontWeight: 'bold' },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: spacing.md },
-  list: { backgroundColor: colors.white, borderRadius: 12, padding: spacing.md },
-  item: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  itemText: { fontSize: 16, fontWeight: 'bold' },
-  itemSub: { fontSize: 12, color: colors.gray500, marginTop: 2 }
+  buttonText: { color: '#fff', fontWeight: 'bold' },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: spacing.md, color: colors.text },
+  list: { backgroundColor: colors.card, borderRadius: 12, padding: spacing.md },
+  item: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+  itemText: { fontSize: 16, fontWeight: 'bold', color: colors.text },
+  itemSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 }
 });

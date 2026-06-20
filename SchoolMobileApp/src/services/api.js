@@ -36,7 +36,12 @@ const createInstance = (baseURL) => {
       return response;
     },
     (error) => {
-      console.error(`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, error.response?.data || error.message);
+      const method = error.config?.method?.toUpperCase() || 'UNKNOWN';
+      const url = error.config?.url || 'UNKNOWN URL';
+      const status = error.response?.status || 'NETWORK_ERROR';
+      const data = error.response?.data || error.message;
+
+      console.error(`[API Error] ${method} ${url} | Status: ${status}:`, data);
       return Promise.reject(error);
     }
   );

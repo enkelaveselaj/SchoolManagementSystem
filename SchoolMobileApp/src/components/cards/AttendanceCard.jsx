@@ -1,32 +1,41 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function AttendanceCard({ label, value, percentage, color }) {
+  const { colors } = useTheme();
+  const dynamicStyles = styles(colors);
+
   return (
-    <View style={styles.card}>
-      <View style={[styles.colorBand, { backgroundColor: color || colors.primary }]} />
-      <View style={styles.content}>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.value}>{value}</Text>
+    <View style={dynamicStyles.card}>
+      <View style={[dynamicStyles.colorBand, { backgroundColor: color || colors.primary }]} />
+      <View style={dynamicStyles.content}>
+        <Text style={dynamicStyles.label}>{label}</Text>
+        <Text style={dynamicStyles.value}>{value}</Text>
         {percentage !== undefined && (
-          <Text style={styles.percentage}>{percentage}%</Text>
+          <Text style={dynamicStyles.percentage}>{percentage}%</Text>
         )}
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
-    borderRadius: 8,
+    backgroundColor: colors.card,
+    borderRadius: 12,
     marginBottom: spacing.md,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   colorBand: {
-    width: 4,
+    width: 6,
   },
   content: {
     flex: 1,
@@ -34,18 +43,18 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    color: colors.gray600 || '#6B7280',
-    marginBottom: spacing.xs,
+    color: colors.textSecondary,
+    marginBottom: 4,
+    fontWeight: '600',
   },
   value: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: colors.gray900 || '#1F2937',
+    color: colors.text,
   },
   percentage: {
     fontSize: 14,
-    color: colors.gray500 || '#9CA3AF',
-    marginTop: spacing.xs,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
 });
-

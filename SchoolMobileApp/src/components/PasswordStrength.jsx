@@ -1,39 +1,43 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { getPasswordStrength, getPasswordStrengthLabel } from '../utils/validators';
-import { colors, spacing } from '../styles';
+import { spacing } from '../styles';
+import { useTheme } from '../hooks/useTheme';
 
 export default function PasswordStrength({ password }) {
+  const { colors } = useTheme();
   const strength = getPasswordStrength(password);
   const label = getPasswordStrengthLabel(strength);
   const width = Math.min(100, (strength / 6) * 100);
 
+  const dynamicStyles = styles(colors);
+
   return (
-    <View style={styles.container}>
-      <View style={styles.barBackground}>
-        <View style={[styles.barFill, { width: `${width}%` }]} />
+    <View style={dynamicStyles.container}>
+      <View style={dynamicStyles.barBackground}>
+        <View style={[dynamicStyles.barFill, { width: `${width}%` }]} />
       </View>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={dynamicStyles.label}>{label}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { marginTop: spacing.sm },
+const styles = (colors) => StyleSheet.create({
+  container: { marginTop: spacing.sm, marginBottom: spacing.md },
   barBackground: {
-    height: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: colors.border,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   barFill: {
-    height: 8,
+    height: 6,
     backgroundColor: colors.primary,
   },
   label: {
     marginTop: spacing.xs,
     fontSize: 12,
-    color: colors.gray500,
+    color: colors.textSecondary,
+    fontWeight: '500'
   },
 });
-

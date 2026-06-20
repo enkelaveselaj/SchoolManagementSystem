@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function GradeCard({ subject, grade, date }) {
+  const { colors } = useTheme();
   const getGradeColor = (grade) => {
     if (grade >= 9) return '#4CAF50';
     if (grade >= 8) return '#8BC34A';
@@ -11,28 +13,35 @@ export default function GradeCard({ subject, grade, date }) {
     return '#F44336';
   };
 
+  const dynamicStyles = styles(colors);
+
   return (
-    <View style={styles.card}>
-      <View style={styles.info}>
-        <Text style={styles.subject}>{subject}</Text>
-        <Text style={styles.date}>{new Date(date).toLocaleDateString()}</Text>
+    <View style={dynamicStyles.card}>
+      <View style={dynamicStyles.info}>
+        <Text style={dynamicStyles.subject}>{subject}</Text>
+        <Text style={dynamicStyles.date}>{new Date(date).toLocaleDateString()}</Text>
       </View>
-      <View style={[styles.gradeBox, { backgroundColor: getGradeColor(grade) }]}>
-        <Text style={styles.gradeText}>{grade}</Text>
+      <View style={[dynamicStyles.gradeBox, { backgroundColor: getGradeColor(grade) }]}>
+        <Text style={dynamicStyles.gradeText}>{grade}</Text>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: spacing.md,
     marginBottom: spacing.sm,
-    borderRadius: 8,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   info: {
     flex: 1,
@@ -40,24 +49,23 @@ const styles = StyleSheet.create({
   subject: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900 || '#1F2937',
+    color: colors.text,
   },
   date: {
     fontSize: 12,
-    color: colors.gray600 || '#6B7280',
+    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   gradeBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
   gradeText: {
-    color: colors.white,
-    fontSize: 20,
+    color: '#FFFFFF',
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });
-

@@ -7,117 +7,133 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function SettingsScreen({ navigation }) {
   const { user, logout } = useAuth();
+  const { isDarkMode, toggleDarkMode, colors } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', onPress: () => {} },
-      {
-        text: 'Logout',
-        onPress: async () => {
-          await logout();
+    if (Platform.OS === 'web') {
+      const confirmLogout = window.confirm('Are you sure you want to logout?');
+      if (confirmLogout) {
+        logout();
+      }
+    } else {
+      Alert.alert('Logout', 'Are you sure you want to logout?', [
+        { text: 'Cancel', onPress: () => {} },
+        {
+          text: 'Logout',
+          onPress: async () => {
+            await logout();
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
+  const dynamicStyles = styles(colors);
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={dynamicStyles.container}>
       {/* Profile Section */}
-      <View style={styles.section}>
-        <View style={styles.profileHeader}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
+      <View style={dynamicStyles.section}>
+        <View style={dynamicStyles.profileHeader}>
+          <View style={dynamicStyles.avatar}>
+            <Text style={dynamicStyles.avatarText}>
               {user?.firstName?.charAt(0).toUpperCase()}
             </Text>
           </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>
+          <View style={dynamicStyles.profileInfo}>
+            <Text style={dynamicStyles.profileName}>
               {user?.firstName} {user?.lastName}
             </Text>
-            <Text style={styles.profileEmail}>{user?.email}</Text>
+            <Text style={dynamicStyles.profileEmail}>{user?.email}</Text>
           </View>
         </View>
       </View>
 
       {/* Preferences Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Preferences</Text>
 
-        <View style={styles.settingItem}>
-          <View style={styles.settingLeft}>
+        <View style={dynamicStyles.settingItem}>
+          <View style={dynamicStyles.settingLeft}>
             <Ionicons name="notifications" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>Push Notifications</Text>
+            <Text style={dynamicStyles.settingLabel}>Push Notifications</Text>
           </View>
           <Switch
             value={notificationsEnabled}
             onValueChange={setNotificationsEnabled}
+            trackColor={{ false: '#767577', true: colors.primary }}
           />
         </View>
 
-        <View style={styles.settingItem}>
-          <View style={styles.settingLeft}>
+        <View style={dynamicStyles.settingItem}>
+          <View style={dynamicStyles.settingLeft}>
             <Ionicons name="moon" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>Dark Mode</Text>
+            <Text style={dynamicStyles.settingLabel}>Dark Mode</Text>
           </View>
-          <Switch value={darkMode} onValueChange={setDarkMode} />
+          <Switch
+            value={isDarkMode}
+            onValueChange={toggleDarkMode}
+            trackColor={{ false: '#767577', true: colors.primary }}
+          />
         </View>
       </View>
 
       {/* About Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>About</Text>
 
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
+        <TouchableOpacity style={dynamicStyles.settingItem}>
+          <View style={dynamicStyles.settingLeft}>
             <Ionicons name="information-circle" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>App Version</Text>
+            <Text style={dynamicStyles.settingLabel}>App Version</Text>
           </View>
-          <Text style={styles.settingValue}>1.0.0</Text>
+          <Text style={dynamicStyles.settingValue}>1.0.0</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
+        <TouchableOpacity style={dynamicStyles.settingItem}>
+          <View style={dynamicStyles.settingLeft}>
             <Ionicons name="document-text" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>Terms of Service</Text>
+            <Text style={dynamicStyles.settingLabel}>Terms of Service</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.gray500 || '#9CA3AF'} />
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
+        <TouchableOpacity style={dynamicStyles.settingItem}>
+          <View style={dynamicStyles.settingLeft}>
             <Ionicons name="shield-checkmark" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>Privacy Policy</Text>
+            <Text style={dynamicStyles.settingLabel}>Privacy Policy</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.gray500 || '#9CA3AF'} />
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
       {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+      <TouchableOpacity style={dynamicStyles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out" size={20} color={colors.white} />
-        <Text style={styles.logoutText}>Logout</Text>
+        <Text style={dynamicStyles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray100 || '#F3F4F6',
+    backgroundColor: colors.background,
   },
   section: {
-    backgroundColor: colors.white,
-    marginVertical: spacing.lg,
+    backgroundColor: colors.card,
+    marginVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
@@ -143,20 +159,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.gray900 || '#1F2937',
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
   },
   profileEmail: {
-    fontSize: 12,
-    color: colors.gray600 || '#6B7280',
+    fontSize: 14,
+    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: colors.gray900 || '#1F2937',
+    fontWeight: '700',
+    color: colors.primary,
     marginBottom: spacing.md,
+    textTransform: 'uppercase',
   },
   settingItem: {
     flexDirection: 'row',
@@ -164,7 +181,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray300 || '#E5E7EB',
+    borderBottomColor: colors.border,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -172,23 +189,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingLabel: {
-    fontSize: 14,
-    color: colors.gray900 || '#1F2937',
+    fontSize: 16,
+    color: colors.text,
     marginLeft: spacing.md,
   },
   settingValue: {
     fontSize: 14,
-    color: colors.gray600 || '#6B7280',
+    color: colors.textSecondary,
   },
   logoutButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: colors.danger,
     marginHorizontal: spacing.lg,
-    marginVertical: spacing.lg,
+    marginVertical: spacing.xl,
     paddingVertical: spacing.md,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
+    shadowColor: colors.danger,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   logoutText: {
     color: colors.white,

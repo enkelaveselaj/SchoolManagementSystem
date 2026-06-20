@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import studentManagementService from '../../services/studentManagementService';
 import schoolService from '../../services/schoolService';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function AdminStudentEnrollmentScreen() {
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState([]);
   const [enrollment, setEnrollment] = useState({ studentId: '', classId: '', sectionId: '' });
@@ -41,26 +43,28 @@ export default function AdminStudentEnrollmentScreen() {
     }
   };
 
+  const dynamicStyles = styles(colors);
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Student Enrollment</Text>
+    <ScrollView style={dynamicStyles.container} contentContainerStyle={dynamicStyles.content}>
+      <Text style={dynamicStyles.title}>Student Enrollment</Text>
 
-      <View style={styles.section}>
-        <TextInput style={styles.input} placeholder="Student ID" value={enrollment.studentId} onChangeText={t => setEnrollment({...enrollment, studentId: t})} keyboardType="numeric" />
-        <TextInput style={styles.input} placeholder="Class ID" value={enrollment.classId} onChangeText={t => setEnrollment({...enrollment, classId: t})} keyboardType="numeric" />
-        <TextInput style={styles.input} placeholder="Section ID" value={enrollment.sectionId} onChangeText={t => setEnrollment({...enrollment, sectionId: t})} keyboardType="numeric" />
+      <View style={dynamicStyles.section}>
+        <TextInput style={dynamicStyles.input} placeholder="Student ID" placeholderTextColor={colors.textSecondary} value={enrollment.studentId} onChangeText={t => setEnrollment({...enrollment, studentId: t})} keyboardType="numeric" />
+        <TextInput style={dynamicStyles.input} placeholder="Class ID" placeholderTextColor={colors.textSecondary} value={enrollment.classId} onChangeText={t => setEnrollment({...enrollment, classId: t})} keyboardType="numeric" />
+        <TextInput style={dynamicStyles.input} placeholder="Section ID" placeholderTextColor={colors.textSecondary} value={enrollment.sectionId} onChangeText={t => setEnrollment({...enrollment, sectionId: t})} keyboardType="numeric" />
 
-        <TouchableOpacity style={styles.button} onPress={handleEnroll}>
-          <Text style={styles.buttonText}>Enroll Student</Text>
+        <TouchableOpacity style={dynamicStyles.button} onPress={handleEnroll}>
+          <Text style={dynamicStyles.buttonText}>Enroll Student</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.list}>
-        <Text style={styles.sectionTitle}>Students List</Text>
+      <View style={dynamicStyles.list}>
+        <Text style={dynamicStyles.sectionTitle}>Students List</Text>
         {students.map(s => (
-          <View key={s.id} style={styles.item}>
-            <Text style={styles.itemText}>{s.firstName} {s.lastName} (ID: {s.id})</Text>
-            <Text style={styles.itemSub}>Class ID: {s.classId || 'Not Assigned'} | Section ID: {s.sectionId || 'Not Assigned'}</Text>
+          <View key={s.id} style={dynamicStyles.item}>
+            <Text style={dynamicStyles.itemText}>{s.firstName} {s.lastName} (ID: {s.id})</Text>
+            <Text style={dynamicStyles.itemSub}>Class ID: {s.classId || 'Not Assigned'} | Section ID: {s.sectionId || 'Not Assigned'}</Text>
           </View>
         ))}
       </View>
@@ -68,17 +72,17 @@ export default function AdminStudentEnrollmentScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray100 },
+const styles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg },
-  section: { backgroundColor: colors.white, padding: spacing.md, borderRadius: 12, marginBottom: spacing.lg },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 10, marginBottom: 12 },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg, color: colors.text },
+  section: { backgroundColor: colors.card, padding: spacing.md, borderRadius: 12, marginBottom: spacing.lg },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 10, marginBottom: 12, color: colors.text },
   button: { backgroundColor: colors.primary, padding: 12, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: colors.white, fontWeight: 'bold' },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: spacing.md },
-  list: { backgroundColor: colors.white, borderRadius: 12, padding: spacing.md },
-  item: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  itemText: { fontSize: 16, fontWeight: 'bold' },
-  itemSub: { fontSize: 12, color: colors.gray500, marginTop: 2 }
+  buttonText: { color: "#fff", fontWeight: 'bold' },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: spacing.md, color: colors.text },
+  list: { backgroundColor: colors.card, borderRadius: 12, padding: spacing.md },
+  item: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+  itemText: { fontSize: 16, fontWeight: 'bold', color: colors.text },
+  itemSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 }
 });

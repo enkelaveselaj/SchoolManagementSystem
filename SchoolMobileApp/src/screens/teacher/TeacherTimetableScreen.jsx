@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import academicService from '../../services/academicService';
 import schoolService from '../../services/schoolService';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function TeacherTimetableScreen() {
+  const { colors } = useTheme();
   const [timetables, setTimetables] = useState([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -38,73 +40,134 @@ export default function TeacherTimetableScreen() {
   };
 
   const loadTimetables = async () => {
-    // In a real app we'd filter by teacher
+    setLoading(true);
     const res = await academicService.getTimetables();
     if (res.success) setTimetables(res.data);
+    setLoading(false);
   };
 
   useEffect(() => {
     loadTimetables();
   }, []);
 
+  const dynamicStyles = styles(colors);
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Manage Timetable</Text>
+    <ScrollView style={dynamicStyles.container} contentContainerStyle={dynamicStyles.content}>
+      <Text style={dynamicStyles.title}>Manage Timetable</Text>
 
-      <View style={styles.form}>
-        <TextInput style={styles.input} placeholder="Subject ID" value={formData.subjectId} onChangeText={t => setFormData({...formData, subjectId: t})} keyboardType="numeric" />
-        <TextInput style={styles.input} placeholder="Class ID" value={formData.classId} onChangeText={t => setFormData({...formData, classId: t})} keyboardType="numeric" />
-        <TextInput style={styles.input} placeholder="Section ID" value={formData.sectionId} onChangeText={t => setFormData({...formData, sectionId: t})} keyboardType="numeric" />
-        <TextInput style={styles.input} placeholder="Teacher ID" value={formData.teacherId} onChangeText={t => setFormData({...formData, teacherId: t})} keyboardType="numeric" />
-        <TextInput style={styles.input} placeholder="Room" value={formData.room} onChangeText={t => setFormData({...formData, room: t})} />
-        <TextInput style={styles.input} placeholder="Start Time (HH:MM)" value={formData.startTime} onChangeText={t => setFormData({...formData, startTime: t})} />
-        <TextInput style={styles.input} placeholder="End Time (HH:MM)" value={formData.endTime} onChangeText={t => setFormData({...formData, endTime: t})} />
+      <View style={dynamicStyles.form}>
+        <TextInput
+          style={dynamicStyles.input}
+          placeholder="Subject ID"
+          placeholderTextColor={colors.textSecondary}
+          value={formData.subjectId}
+          onChangeText={t => setFormData({...formData, subjectId: t})}
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={dynamicStyles.input}
+          placeholder="Class ID"
+          placeholderTextColor={colors.textSecondary}
+          value={formData.classId}
+          onChangeText={t => setFormData({...formData, classId: t})}
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={dynamicStyles.input}
+          placeholder="Section ID"
+          placeholderTextColor={colors.textSecondary}
+          value={formData.sectionId}
+          onChangeText={t => setFormData({...formData, sectionId: t})}
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={dynamicStyles.input}
+          placeholder="Teacher ID"
+          placeholderTextColor={colors.textSecondary}
+          value={formData.teacherId}
+          onChangeText={t => setFormData({...formData, teacherId: t})}
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={dynamicStyles.input}
+          placeholder="Room"
+          placeholderTextColor={colors.textSecondary}
+          value={formData.room}
+          onChangeText={t => setFormData({...formData, room: t})}
+        />
+        <TextInput
+          style={dynamicStyles.input}
+          placeholder="Start Time (HH:MM)"
+          placeholderTextColor={colors.textSecondary}
+          value={formData.startTime}
+          onChangeText={t => setFormData({...formData, startTime: t})}
+        />
+        <TextInput
+          style={dynamicStyles.input}
+          placeholder="End Time (HH:MM)"
+          placeholderTextColor={colors.textSecondary}
+          value={formData.endTime}
+          onChangeText={t => setFormData({...formData, endTime: t})}
+        />
 
-        <Text style={styles.label}>Day</Text>
-        <View style={styles.daysRow}>
+        <Text style={dynamicStyles.label}>Day</Text>
+        <View style={dynamicStyles.daysRow}>
             {days.slice(0, 5).map(d => (
                 <TouchableOpacity
                     key={d}
-                    style={[styles.dayBtn, formData.dayOfWeek === d && styles.dayBtnActive]}
+                    style={[dynamicStyles.dayBtn, formData.dayOfWeek === d && dynamicStyles.dayBtnActive]}
                     onPress={() => setFormData({...formData, dayOfWeek: d})}
                 >
-                    <Text style={[styles.dayBtnText, formData.dayOfWeek === d && styles.dayBtnTextActive]}>{d.substring(0,3)}</Text>
+                    <Text style={[dynamicStyles.dayBtnText, formData.dayOfWeek === d && dynamicStyles.dayBtnTextActive]}>{d.substring(0,3)}</Text>
                 </TouchableOpacity>
             ))}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleCreate}>
-          <Text style={styles.buttonText}>Add Entry</Text>
+        <TouchableOpacity style={dynamicStyles.button} onPress={handleCreate}>
+          <Text style={dynamicStyles.buttonText}>Add Entry</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.sectionTitle}>Existing Timetable</Text>
-      {timetables.map(t => (
-        <View key={t.id} style={styles.item}>
-            <Text style={styles.itemText}>{t.dayOfWeek}: {t.startTime} - {t.endTime}</Text>
-            <Text style={styles.itemSub}>Room {t.room} | Sub ID: {t.subjectId}</Text>
-        </View>
-      ))}
+      <Text style={dynamicStyles.sectionTitle}>Existing Timetable</Text>
+      {loading ? <ActivityIndicator size="large" color={colors.primary} /> : (
+        timetables.map(t => (
+          <View key={t.id} style={dynamicStyles.item}>
+              <Text style={dynamicStyles.itemText}>{t.dayOfWeek}: {t.startTime} - {t.endTime}</Text>
+              <Text style={dynamicStyles.itemSub}>Room {t.room} | Sub ID: {t.subjectId}</Text>
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray100 },
+const styles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg },
-  form: { backgroundColor: colors.white, padding: spacing.md, borderRadius: 12, marginBottom: spacing.lg },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 10, marginBottom: 8 },
-  label: { fontWeight: 'bold', marginBottom: 5 },
-  daysRow: { flexDirection: 'row', gap: 5, marginBottom: 12 },
-  dayBtn: { flex: 1, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.primary, alignItems: 'center' },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg, color: colors.text },
+  form: { backgroundColor: colors.card, padding: spacing.md, borderRadius: 16, marginBottom: spacing.lg, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, marginBottom: 12, color: colors.text, fontSize: 16 },
+  label: { fontWeight: '700', marginBottom: 12, color: colors.primary, textTransform: 'uppercase', fontSize: 12 },
+  daysRow: { flexDirection: 'row', gap: 6, marginBottom: 20 },
+  dayBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: colors.primary, alignItems: 'center' },
   dayBtnActive: { backgroundColor: colors.primary },
-  dayBtnText: { color: colors.primary, fontSize: 10, fontWeight: 'bold' },
-  dayBtnTextActive: { color: colors.white },
-  button: { backgroundColor: colors.primary, padding: 12, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: colors.white, fontWeight: 'bold' },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: spacing.md },
-  item: { backgroundColor: colors.white, padding: 12, marginBottom: 8, borderRadius: 8 },
-  itemText: { fontSize: 16, fontWeight: 'bold' },
-  itemSub: { fontSize: 12, color: colors.gray500, marginTop: 4 }
+  dayBtnText: { color: colors.primary, fontSize: 11, fontWeight: 'bold' },
+  dayBtnTextActive: { color: "#FFFFFF" },
+  button: { backgroundColor: colors.primary, padding: 14, borderRadius: 10, alignItems: 'center' },
+  buttonText: { color: "#FFFFFF", fontWeight: 'bold', fontSize: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: spacing.md, color: colors.text },
+  item: {
+    backgroundColor: colors.card,
+    padding: 16,
+    marginBottom: 10,
+    borderRadius: 16,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  itemText: { fontSize: 16, fontWeight: 'bold', color: colors.text },
+  itemSub: { fontSize: 13, color: colors.textSecondary, marginTop: 4 }
 });

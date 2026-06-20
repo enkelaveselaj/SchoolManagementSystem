@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { useStudent } from '../../hooks/useStudent';
 import GradeCard from '../../components/cards/GradeCard';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function GradesScreen() {
+  const { colors } = useTheme();
   const { grades, loading, fetchGrades } = useStudent();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -18,9 +20,11 @@ export default function GradesScreen() {
     setRefreshing(false);
   };
 
+  const dynamicStyles = styles(colors);
+
   if (loading && !grades.length) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={dynamicStyles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -30,26 +34,26 @@ export default function GradesScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={dynamicStyles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.primary]} tintColor={colors.primary} />
       }
     >
       {/* Header Stats */}
-      <View style={styles.header}>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Total Grades</Text>
-          <Text style={styles.statValue}>{grades.length}</Text>
+      <View style={dynamicStyles.header}>
+        <View style={dynamicStyles.statBox}>
+          <Text style={dynamicStyles.statLabel}>Total Grades</Text>
+          <Text style={dynamicStyles.statValue}>{grades.length}</Text>
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Average</Text>
-          <Text style={styles.statValue}>{avgGrade}</Text>
+        <View style={dynamicStyles.statBox}>
+          <Text style={dynamicStyles.statLabel}>Average</Text>
+          <Text style={dynamicStyles.statValue}>{avgGrade}</Text>
         </View>
       </View>
 
       {/* Grades List */}
-      <View style={styles.content}>
-        <Text style={styles.title}>All Grades</Text>
+      <View style={dynamicStyles.content}>
+        <Text style={dynamicStyles.title}>All Grades</Text>
         {grades.length > 0 ? (
           grades.map((grade, index) => (
             <GradeCard
@@ -60,22 +64,23 @@ export default function GradesScreen() {
             />
           ))
         ) : (
-          <Text style={styles.emptyText}>No grades yet</Text>
+          <Text style={dynamicStyles.emptyText}>No grades yet</Text>
         )}
       </View>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray100 || '#F3F4F6',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -83,21 +88,23 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.lg,
     backgroundColor: colors.primary,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   statBox: {
     flex: 1,
     marginHorizontal: spacing.sm,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     padding: spacing.md,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   statLabel: {
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
     marginBottom: spacing.sm,
   },
   statValue: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 24,
     fontWeight: 'bold',
   },
@@ -108,12 +115,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: spacing.md,
-    color: colors.gray900 || '#1F2937',
+    color: colors.text,
   },
   emptyText: {
     textAlign: 'center',
-    color: colors.gray600 || '#6B7280',
+    color: colors.textSecondary,
     marginTop: spacing.lg,
   },
 });
-

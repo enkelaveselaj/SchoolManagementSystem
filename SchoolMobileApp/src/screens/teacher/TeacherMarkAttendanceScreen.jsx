@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { colors, spacing } from '../../styles';
+import { spacing } from '../../styles';
 import studentManagementService from '../../services/studentManagementService';
 import academicService from '../../services/academicService';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function TeacherMarkAttendanceScreen({ route, navigation }) {
+  const { colors } = useTheme();
   const { classId, sectionId } = route.params;
   const [students, setStudents] = useState([]);
   const [attendance, setAttendance] = useState({}); // { studentId: 'Present' | 'Absent' }
@@ -41,8 +43,6 @@ export default function TeacherMarkAttendanceScreen({ route, navigation }) {
       sectionId
     }));
 
-    // In a real scenario, the backend attendance endpoint might take an array
-    // For this demo, we'll try to send one by one or as a bulk if supported
     setLoading(true);
     try {
       const promises = attendanceData.map(data => academicService.markAttendance(data));
@@ -55,31 +55,34 @@ export default function TeacherMarkAttendanceScreen({ route, navigation }) {
     setLoading(false);
   };
 
+  const dynamicStyles = styles(colors);
+
   const renderItem = ({ item }) => (
-    <View style={styles.item}>
-      <Text style={styles.name}>{item.firstName} {item.lastName}</Text>
+    <View style={dynamicStyles.item}>
+      <Text style={dynamicStyles.name}>{item.firstName} {item.lastName}</Text>
       <TouchableOpacity
-        style={[styles.toggle, attendance[item.id] === 'Absent' && styles.absent]}
+        style={[dynamicStyles.toggle, attendance[item.id] === 'Absent' && dynamicStyles.absent]}
         onPress={() => toggleAttendance(item.id)}
       >
-        <Text style={styles.toggleText}>{attendance[item.id]}</Text>
+        <Text style={dynamicStyles.toggleText}>{attendance[item.id]}</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Mark Attendance</Text>
+    <View style={dynamicStyles.container}>
+      <Text style={dynamicStyles.title}>Mark Attendance</Text>
       {loading ? <ActivityIndicator size="large" color={colors.primary} /> : (
         <>
           <FlatList
             data={students}
             keyExtractor={item => item.id.toString()}
             renderItem={renderItem}
-            ListEmptyComponent={<Text style={styles.empty}>No students found in this section.</Text>}
+            ListEmptyComponent={<Text style={dynamicStyles.empty}>No students found in this section.</Text>}
+            contentContainerStyle={{ paddingBottom: 20 }}
           />
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Text style={styles.saveButtonText}>Save Attendance</Text>
+          <TouchableOpacity style={dynamicStyles.saveButton} onPress={handleSave}>
+            <Text style={dynamicStyles.saveButtonText}>Save Attendance</Text>
           </TouchableOpacity>
         </>
       )}
@@ -87,15 +90,28 @@ export default function TeacherMarkAttendanceScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray100, padding: spacing.lg },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg },
-  item: { backgroundColor: colors.white, padding: spacing.md, borderRadius: 12, marginBottom: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  name: { fontSize: 16, fontWeight: '600' },
-  toggle: { backgroundColor: '#4CAF50', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, minWidth: 100, alignItems: 'center' },
+const styles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg, color: colors.text },
+  item: {
+    backgroundColor: colors.card,
+    padding: spacing.md,
+    borderRadius: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  name: { fontSize: 16, fontWeight: '600', color: colors.text },
+  toggle: { backgroundColor: '#4CAF50', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 25, minWidth: 110, alignItems: 'center' },
   absent: { backgroundColor: colors.danger },
-  toggleText: { color: colors.white, fontWeight: 'bold' },
+  toggleText: { color: "#FFFFFF", fontWeight: 'bold' },
   saveButton: { backgroundColor: colors.primary, padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 10 },
-  saveButtonText: { color: colors.white, fontWeight: 'bold', fontSize: 16 },
-  empty: { textAlign: 'center', marginTop: 20, color: colors.gray500 }
+  saveButtonText: { color: "#FFFFFF", fontWeight: 'bold', fontSize: 16 },
+  empty: { textAlign: 'center', marginTop: 20, color: colors.textSecondary }
 });
