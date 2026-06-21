@@ -2,35 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { useStudent } from '../../hooks/useStudent';
 import AttendanceCard from '../../components/cards/AttendanceCard';
-import { spacing } from '../../styles';
+import { spacing, shadow } from '../../styles';
 import { useTheme } from '../../hooks/useTheme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function AttendanceScreen() {
   const { colors } = useTheme();
-  const { attendance, loading, fetchAttendance, fetchAttendanceStats } = useStudent();
+  const { attendanceRecords, attendanceStats, loading, fetchAttendance, fetchAttendanceStats } = useStudent();
   const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     fetchAttendance();
-    loadStats();
+    fetchAttendanceStats();
   }, []);
-
-  const loadStats = async () => {
-    const statsData = await fetchAttendanceStats();
-    setStats(statsData);
-  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchAttendance();
-    await loadStats();
+    await Promise.all([fetchAttendance(), fetchAttendanceStats()]);
     setRefreshing(false);
   };
 
   const dynamicStyles = styles(colors);
 
-  if (loading && !attendance) {
+  if (loading && !attendanceRecords.length && !attendanceStats) {
     return (
       <View style={dynamicStyles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -38,10 +32,10 @@ export default function AttendanceScreen() {
     );
   }
 
-  const attendancePercentage = attendance?.percentage || 0;
-  const presentDays = attendance?.present || 0;
-  const absentDays = attendance?.absent || 0;
-  const records = attendance?.records || [];
+  const attendancePercentage = attendanceStats?.attendanceRate || 0;
+  const presentDays = attendanceStats?.presentCount || 0;
+  const absentDays = attendanceStats?.absentCount || 0;
+  const lateDays = attendanceStats?.lateCount || 0;
 
   return (
     <ScrollView
@@ -50,44 +44,49 @@ export default function AttendanceScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.primary]} tintColor={colors.primary} />
       }
     >
-      {/* Main Percentage Circle */}
       <View style={dynamicStyles.circleContainer}>
         <View style={[dynamicStyles.circle, { borderColor: getColorForPercentage(attendancePercentage) }]}>
-          <Text style={dynamicStyles.circlePercentage}>{attendancePercentage}%</Text>
-          <Text style={dynamicStyles.circleLabel}>Attendance</Text>
+          <Text style={dynamicStyles.circlePercentage}>{Math.round(attendancePercentage)}%</Text>
+          <Text style={dynamicStyles.circleLabel}>Overall Presence</Text>
         </View>
       </View>
 
-      {/* Stats Cards */}
       <View style={dynamicStyles.statsContainer}>
-        <AttendanceCard label="Present" value={presentDays} color="#4CAF50" />
-        <AttendanceCard label="Absent" value={absentDays} color="#F44336" />
+        <View style={dynamicStyles.statsRow}>
+            <AttendanceCard label="Present" value={presentDays} color="#4CAF50" />
+            <AttendanceCard label="Absent" value={absentDays} color="#F44336" />
+            <AttendanceCard label="Late" value={lateDays} color="#FF9800" />
+        </View>
       </View>
 
-      {/* Attendance History */}
-      {records.length > 0 && (
-        <View style={dynamicStyles.section}>
-          <Text style={dynamicStyles.sectionTitle}>Recent Attendance</Text>
-          {records.slice(0, 10).map((record, index) => (
-            <View key={index} style={dynamicStyles.recordItem}>
-              <Text style={dynamicStyles.recordDate}>
-                {new Date(record.date).toLocaleDateString()}
-              </Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Attendance History</Text>
+        {attendanceRecords.length > 0 ? (
+          attendanceRecords.map((record, index) => (
+            <View key={record.id || index} style={dynamicStyles.recordItem}>
+              <View>
+                <Text style={dynamicStyles.recordDate}>
+                    {new Date(record.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                </Text>
+                <Text style={dynamicStyles.subjectName}>{record.subject?.name || 'General'}</Text>
+              </View>
               <View
                 style={[
                   dynamicStyles.statusBadge,
-                  {
-                    backgroundColor:
-                      record.status === 'Present' ? '#4CAF50' : '#F44336',
-                  },
+                  { backgroundColor: getStatusColor(record.status) },
                 ]}
               >
-                <Text style={dynamicStyles.statusText}>{record.status}</Text>
+                <Text style={dynamicStyles.statusText}>{record.status.toUpperCase()}</Text>
               </View>
             </View>
-          ))}
-        </View>
-      )}
+          ))
+        ) : (
+          <View style={dynamicStyles.emptyContainer}>
+            <Ionicons name="calendar-outline" size={48} color={colors.textSecondary} />
+            <Text style={dynamicStyles.emptyText}>No attendance records found</Text>
+          </View>
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -99,84 +98,57 @@ function getColorForPercentage(percentage) {
   return '#F44336';
 }
 
+function getStatusColor(status) {
+    switch (status.toLowerCase()) {
+        case 'present': return '#4CAF50';
+        case 'absent': return '#F44336';
+        case 'late': return '#FF9800';
+        case 'excused': return '#2196F3';
+        default: return '#9E9E9E';
+    }
+}
+
 const styles = (colors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   circleContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 30,
     backgroundColor: colors.card,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    ...shadow,
+    elevation: 4,
   },
   circle: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 10,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  circlePercentage: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  circleLabel: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginTop: 8,
-  },
-  statsContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-  },
-  section: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: spacing.md,
-    color: colors.text,
-  },
+  circlePercentage: { fontSize: 36, fontWeight: 'bold', color: colors.text },
+  circleLabel: { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
+  statsContainer: { padding: spacing.md },
+  statsRow: { flexDirection: 'row', gap: 10 },
+  section: { padding: spacing.lg },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: spacing.md, color: colors.text },
   recordItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: colors.card,
     padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderRadius: 12,
+    marginBottom: 10,
+    borderRadius: 16,
+    ...shadow,
+    elevation: 2,
   },
-  recordDate: {
-    fontSize: 15,
-    color: colors.text,
-    fontWeight: '600',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  statusText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
+  recordDate: { fontSize: 14, color: colors.text, fontWeight: '700' },
+  subjectName: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  statusText: { color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' },
+  emptyContainer: { alignItems: 'center', marginTop: 40 },
+  emptyText: { color: colors.textSecondary, marginTop: 10 }
 });

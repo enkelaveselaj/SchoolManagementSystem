@@ -3,14 +3,22 @@ const { Op } = require('sequelize');
 
 class AttendanceRepository {
   async create(data) {
-    return Attendance.create({
-        ...data,
-        studentId: parseInt(data.studentId),
-        classId: parseInt(data.classId),
-        subjectId: parseInt(data.subjectId),
-        teacherId: parseInt(data.teacherId),
-        markedBy: parseInt(data.markedBy)
-    });
+    try {
+        console.log('Creating attendance record:', data);
+        return await Attendance.create({
+            studentId: parseInt(data.studentId),
+            classId: parseInt(data.classId),
+            subjectId: parseInt(data.subjectId),
+            teacherId: parseInt(data.teacherId),
+            date: data.date,
+            status: data.status,
+            markedBy: parseInt(data.markedBy) || 1,
+            notes: data.notes || null
+        });
+    } catch (error) {
+        console.error('Repository error in create:', error);
+        throw error;
+    }
   }
 
   async getAll() {
@@ -26,7 +34,12 @@ class AttendanceRepository {
   }
 
   async update(id, data) {
-    return Attendance.update(data, { where: { id: parseInt(id) } });
+    try {
+        return await Attendance.update(data, { where: { id: parseInt(id) } });
+    } catch (error) {
+        console.error('Repository error in update:', error);
+        throw error;
+    }
   }
 
   async delete(id) {
@@ -34,14 +47,19 @@ class AttendanceRepository {
   }
 
   async findByStudentClassSubjectDate(studentId, classId, subjectId, date) {
-    return Attendance.findOne({
-      where: {
-        studentId: parseInt(studentId),
-        classId: parseInt(classId),
-        subjectId: parseInt(subjectId),
-        date
-      }
-    });
+    try {
+        return await Attendance.findOne({
+            where: {
+                studentId: parseInt(studentId),
+                classId: parseInt(classId),
+                subjectId: parseInt(subjectId),
+                date: date
+            }
+        });
+    } catch (error) {
+        console.error('Repository error in findByStudentClassSubjectDate:', error);
+        throw error;
+    }
   }
 
   async findByClassAndDate(classId, date, subjectId = null) {
@@ -56,11 +74,15 @@ class AttendanceRepository {
 
   async findByStudentWithDateRange(studentId, startDate = null, endDate = null) {
     const where = { studentId: parseInt(studentId) };
-    if (startDate && endDate) where.date = { [Op.between]: [startDate, endDate] };
+    if (startDate && endDate) {
+      where.date = { [Op.between]: [startDate, endDate] };
+    }
     return Attendance.findAll({
         where,
         include: [{ model: Subject, as: 'subject' }],
-        order: [['date', 'DESC']]
+        order: [['date', 'DESC']],
+        raw: false,
+        subQuery: false
     });
   }
 
@@ -77,7 +99,8 @@ class AttendanceRepository {
         [Attendance.sequelize.fn('COUNT', Attendance.sequelize.literal("CASE WHEN status = 'excused' THEN 1 END")), 'excusedCount'],
         [Attendance.sequelize.fn('COUNT', Attendance.sequelize.literal('1')), 'totalRecords']
       ],
-      raw: true
+      raw: true,
+      subQuery: false
     });
     return stats[0];
   }
@@ -95,7 +118,8 @@ class AttendanceRepository {
         [Attendance.sequelize.fn('COUNT', Attendance.sequelize.literal("CASE WHEN status = 'excused' THEN 1 END")), 'excusedCount'],
         [Attendance.sequelize.fn('COUNT', Attendance.sequelize.literal('1')), 'totalRecords']
       ],
-      raw: true
+      raw: true,
+      subQuery: false
     });
     return stats[0];
   }
@@ -125,7 +149,8 @@ class AttendanceRepository {
         [Attendance.sequelize.fn('COUNT', Attendance.sequelize.literal("CASE WHEN status = 'excused' THEN 1 END")), 'excusedCount'],
         [Attendance.sequelize.fn('COUNT', Attendance.sequelize.literal('1')), 'totalRecords']
       ],
-      raw: true
+      raw: true,
+      subQuery: false
     });
     return summary[0];
   }

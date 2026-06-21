@@ -1,6 +1,7 @@
 const attendanceRepository = require('../repositories/attendance');
 const notificationService = require('./notificationService');
 const authServiceClient = require('./authServiceClient');
+const { Subject } = require("../src/models");
 
 const normalizeCounts = (stats) => ({
   ...stats,
@@ -16,8 +17,13 @@ class AttendanceService {
     try {
       const { classId, subjectId, teacherId, date, markedBy, attendanceRecords } = attendanceData;
       
-      // Robust date validation
-      const inputDate = date; // YYYY-MM-DD
+      // 1. Verify the subject exists in THIS database
+      const subject = await Subject.findByPk(parseInt(subjectId));
+      if (!subject) {
+          throw new Error(`Subject with ID ${subjectId} not found in Academic database. Create it in Admin Setup first.`);
+      }
+
+      const inputDate = date;
       const today = new Date().toISOString().split('T')[0];
       
       if (inputDate > today) {
@@ -29,16 +35,14 @@ class AttendanceService {
       for (const record of attendanceRecords) {
         const { studentId, status } = record;
         
-        // Ensure we have the required fields
         if (!studentId || !status) continue;
 
-        // Check if attendance already exists
         const existingAttendance = await attendanceRepository.findByStudentClassSubjectDate(studentId, classId, subjectId, date);
 
         if (existingAttendance) {
           const updated = await attendanceRepository.update(existingAttendance.id, {
             status: status.toLowerCase(),
-            markedBy: markedBy || teacherId
+            markedBy: parseInt(markedBy) || parseInt(teacherId)
           });
           results.push(updated);
         } else {
@@ -49,7 +53,7 @@ class AttendanceService {
             teacherId,
             date,
             status: status.toLowerCase(),
-            markedBy: markedBy || teacherId
+            markedBy: parseInt(markedBy) || parseInt(teacherId)
           });
           results.push(created);
         }

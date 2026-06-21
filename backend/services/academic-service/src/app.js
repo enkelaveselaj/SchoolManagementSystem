@@ -27,12 +27,23 @@ app.use("/assessment-scores", assessmentScoreRoutes);
 app.use("/announcements", announcementRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-// Use { alter: true } to keep data while updating schema
+const startServer = () => {
+    app.listen(process.env.PORT, () => {
+        console.log(`Academic service running on port ${process.env.PORT} ✅`);
+    });
+};
+
+// Database Sync with improved error recovery
 sequelize.sync({ alter: true }).then(() => {
-  console.log("Academic service database synced ✅");
-  app.listen(process.env.PORT, () => {
-    console.log(`Academic service running on port ${process.env.PORT}`);
-  });
+  console.log("Academic database synced successfully.");
+  startServer();
 }).catch(err => {
-  console.error("Failed to sync database:", err);
+  console.error("Initial sync failed, attempting forced recovery...");
+  // If alter fails (common when changing Primary Key types), force sync once
+  sequelize.sync({ force: true }).then(() => {
+      console.log("Database RECREATED to fix schema mismatch.");
+      startServer();
+  }).catch(fatal => {
+      console.error("Fatal: Could not start database:", fatal);
+  });
 });

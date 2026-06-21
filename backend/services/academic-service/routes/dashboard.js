@@ -2,14 +2,14 @@ const express = require("express");
 const router = express.Router();
 const { Grade, AssessmentScore, Attendance, Subject, Timetable, Assessment } = require("../src/models");
 const { Op } = require("sequelize");
+const authServiceClient = require("../services/authServiceClient");
 
-router.get("/student/:studentId", async (req, res) => {
+router.get("/student/:userId", async (req, res) => {
   try {
-    const studentId = parseInt(req.params.studentId);
+    const userId = parseInt(req.params.userId);
 
-    if (isNaN(studentId)) {
-      return res.status(400).json({ error: "Valid studentId is required" });
-    }
+    // Resolve Auth UserID to domain StudentID
+    const studentId = await authServiceClient.getStudentIdByUserId(userId);
 
     // 1. Calculate Attendance Percentage
     const totalAttendance = await Attendance.count({ where: { studentId } });
@@ -37,25 +37,16 @@ router.get("/student/:studentId", async (req, res) => {
       date: s.gradedAt || s.createdAt
     }));
 
-    // 3. Average Grade (from finalized Grades table)
-    const finalizedGrades = await Grade.findAll({ where: { studentId } });
-    let averageGrade = 0;
-    if (finalizedGrades.length > 0) {
-        averageGrade = finalizedGrades.reduce((sum, g) => sum + g.value, 0) / finalizedGrades.length;
-    } else {
-        // Fallback to assessment scores average if no finalized grades
-        const allScores = await AssessmentScore.findAll({ where: { studentId } });
-        if (allScores.length > 0) {
-            averageGrade = allScores.reduce((sum, s) => sum + s.score, 0) / allScores.length;
-        }
-    }
+    // 3. Average Grade
+    const allScores = await AssessmentScore.findAll({ where: { studentId } });
+    const averageGrade = allScores.length > 0
+      ? allScores.reduce((sum, s) => sum + s.score, 0) / allScores.length
+      : 0;
 
-    // 4. Pending Assessments (Count assessments that have no score for this student)
-    const scoredAssessmentIds = recentScores.map(s => s.assessmentId);
+    // 4. Pending Assessments
+    const scoredIds = recentScores.map(s => s.assessmentId);
     const pendingAssessments = await Assessment.count({
-        where: {
-            id: { [Op.notIn]: scoredAssessmentIds.length ? scoredAssessmentIds : [0] }
-        }
+        where: { id: { [Op.notIn]: scoredIds.length ? scoredIds : [0] } }
     });
 
     // 5. Today's Timetable
@@ -72,17 +63,14 @@ router.get("/student/:studentId", async (req, res) => {
         room: t.room || 'TBD'
     })));
 
-    const dashboardData = {
-      studentId,
+    res.json({
       attendancePercentage,
-      averageGrade: parseFloat(averageGrade.toFixed(2)),
+      averageGrade: parseFloat(averageGrade.toFixed(1)),
       recentGrades,
       pendingAssessments,
       upcomingTimetable,
       latestAnnouncements: []
-    };
-
-    res.status(200).json(dashboardData);
+    });
   } catch (error) {
     console.error("Dashboard error:", error);
     res.status(500).json({ error: "Failed to fetch dashboard data" });

@@ -6,7 +6,8 @@ export function useStudent() {
   const user = useAuthStore((state) => state.user);
   const [dashboardData, setDashboardData] = useState(null);
   const [grades, setGrades] = useState([]);
-  const [attendance, setAttendance] = useState(null);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [attendanceStats, setAttendanceStats] = useState(null);
   const [timetable, setTimetable] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -42,7 +43,8 @@ export function useStudent() {
     setLoading(true);
     const result = await studentService.getAttendance(user.id);
     if (result.success) {
-      setAttendance(result.data);
+      // Backend returns data in result.data.data
+      setAttendanceRecords(result.data.data || []);
       setError(null);
     } else {
       setError(result.error);
@@ -54,7 +56,8 @@ export function useStudent() {
     if (!user?.id) return;
     const result = await studentService.getAttendanceStats(user.id);
     if (result.success) {
-      return result.data;
+      setAttendanceStats(result.data.data);
+      return result.data.data;
     }
     return null;
   }, [user?.id]);
@@ -77,8 +80,8 @@ export function useStudent() {
   return {
     dashboardData,
     grades,
-    attendance,
-    timetable,
+    attendanceRecords,
+    attendanceStats,
     loading,
     error,
     fetchDashboard,
@@ -86,6 +89,6 @@ export function useStudent() {
     fetchAttendance,
     fetchAttendanceStats,
     fetchTimetable,
+    timetable
   };
 }
-
