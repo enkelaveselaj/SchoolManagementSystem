@@ -45,6 +45,25 @@ export const createUser = async (data, currentUser) => {
 
   await assignRoleToUser({ userId, roleId });
 
+  // Sync with domain services
+  try {
+    if (role === "Student") {
+      const studentResponse = await fetch(`http://localhost:5004/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: first_name,
+          lastName: last_name,
+          email,
+          userId
+        }),
+      });
+      if (!studentResponse.ok) console.error('Failed to sync student to student-service');
+    }
+  } catch (err) {
+    console.error('Service sync error:', err.message);
+  }
+
   return {
     id: userId,
     first_name,
@@ -231,4 +250,14 @@ export const getParentChildren = async (currentUser) => {
 
   const children = await findStudentsByParentId(currentUser.id);
   return children;
+};
+
+export const getAllUsersByRole = async (role) => {
+    const users = await findUsersByRoleName(role);
+    return users.map(u => ({
+        id: u.id,
+        firstName: u.first_name,
+        lastName: u.last_name,
+        email: u.email
+    }));
 };

@@ -42,5 +42,10 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: false
   });
 
+  Subject.associate = (models) => {
+    Subject.hasMany(models.Grade, { foreignKey: 'subjectId', as: 'grades' });
+    Subject.hasMany(models.Assessment, { foreignKey: 'subjectId', as: 'assessments' });
+  };
+
   return Subject;
 };

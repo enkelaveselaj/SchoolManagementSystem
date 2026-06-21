@@ -6,6 +6,7 @@ import academicService from '../../services/academicService';
 import schoolService from '../../services/schoolService';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TeacherClassesScreen({ navigation }) {
   const { colors } = useTheme();
@@ -20,12 +21,10 @@ export default function TeacherClassesScreen({ navigation }) {
   const loadClasses = async () => {
     setLoading(true);
     try {
-        // 1. Get teacher profile by logged-in user ID
         const teacherRes = await teacherService.getTeacherByUserId(user.id);
         if (teacherRes.success && teacherRes.data) {
             const teacherId = teacherRes.data.id;
 
-            // 2. Get assignments, subjects, and classes in parallel to map names
             const [assignmentsRes, subjectsRes, schoolClassesRes] = await Promise.all([
                 teacherService.getTeacherClasses(teacherId),
                 academicService.getSubjects(),
@@ -34,10 +33,14 @@ export default function TeacherClassesScreen({ navigation }) {
 
             if (assignmentsRes.success) {
                 const subMap = {};
-                if (subjectsRes.success) subjectsRes.data.forEach(s => subMap[s.id] = s.name);
+                if (subjectsRes.success && Array.isArray(subjectsRes.data)) {
+                    subjectsRes.data.forEach(s => subMap[s.id] = s.name);
+                }
 
                 const classMap = {};
-                if (schoolClassesRes.success) schoolClassesRes.data.forEach(c => classMap[c.id] = c.name);
+                if (schoolClassesRes.success && Array.isArray(schoolClassesRes.data)) {
+                    schoolClassesRes.data.forEach(c => classMap[c.id] = c.name);
+                }
 
                 const mappedClasses = assignmentsRes.data.map(item => ({
                     ...item,
@@ -47,10 +50,10 @@ export default function TeacherClassesScreen({ navigation }) {
                 setClasses(mappedClasses);
             }
         } else {
-            Alert.alert('Error', 'Could not find your teacher profile. Ensure you are registered as a teacher.');
+            console.log('Teacher profile not found for user:', user.id);
         }
     } catch (e) {
-        console.error(e);
+        console.error('Error loading teacher classes:', e);
     }
     setLoading(false);
   };
@@ -60,14 +63,20 @@ export default function TeacherClassesScreen({ navigation }) {
   const renderClassItem = ({ item }) => (
     <TouchableOpacity
       style={dynamicStyles.card}
-      onPress={() => navigation.navigate('MarkAttendance', { classId: item.classId, sectionId: item.sectionId })}
+      onPress={() => navigation.navigate('MarkAttendance', {
+        classId: item.classId,
+        sectionId: item.sectionId,
+        subjectId: item.subjectId,
+        className: item.className,
+        subjectName: item.subjectName
+      })}
     >
       <View style={dynamicStyles.info}>
         <Text style={dynamicStyles.className}>{item.className}</Text>
         <Text style={dynamicStyles.subject}>{item.subjectName}</Text>
         <Text style={dynamicStyles.ids}>Sub ID: {item.subjectId} | Class ID: {item.classId}</Text>
       </View>
-      <View style={dynamicStyles.badge}><Text style={dynamicStyles.badgeText}>Open</Text></View>
+      <Ionicons name="chevron-forward" size={20} color={colors.primary} />
     </TouchableOpacity>
   );
 
@@ -75,14 +84,27 @@ export default function TeacherClassesScreen({ navigation }) {
     <View style={dynamicStyles.container}>
       <View style={dynamicStyles.header}>
         <Text style={dynamicStyles.title}>My Classes</Text>
-        <TouchableOpacity onPress={loadClasses}><Text style={{color: colors.primary, fontWeight: '600'}}>Refresh</Text></TouchableOpacity>
+        <TouchableOpacity onPress={loadClasses}>
+            <Ionicons name="refresh" size={24} color={colors.primary} />
+        </TouchableOpacity>
       </View>
-      {loading ? <ActivityIndicator size="large" color={colors.primary} /> : (
+
+      {loading ? (
+        <View style={dynamicStyles.center}>
+            <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
         <FlatList
           data={classes}
           renderItem={renderClassItem}
           keyExtractor={(item, index) => index.toString()}
-          ListEmptyComponent={<Text style={dynamicStyles.empty}>No classes assigned to you yet.</Text>}
+          ListEmptyComponent={
+            <View style={dynamicStyles.emptyContainer}>
+                <Ionicons name="school-outline" size={64} color={colors.textSecondary} />
+                <Text style={dynamicStyles.empty}>No classes assigned to you.</Text>
+                <Text style={dynamicStyles.emptySub}>Ask an Admin to assign subjects and classes to your profile in "Academic Setup".</Text>
+            </View>
+          }
           contentContainerStyle={{ paddingBottom: 20 }}
         />
       )}
@@ -111,7 +133,8 @@ const styles = (colors) => StyleSheet.create({
   className: { fontSize: 18, fontWeight: 'bold', color: colors.text },
   subject: { color: colors.textSecondary, marginTop: 4, fontSize: 14, fontWeight: '500' },
   ids: { color: colors.textSecondary, fontSize: 10, marginTop: 4 },
-  badge: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  badgeText: { color: "#FFFFFF", fontSize: 12, fontWeight: 'bold' },
-  empty: { textAlign: 'center', marginTop: 20, color: colors.textSecondary }
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyContainer: { flex: 1, alignItems: 'center', marginTop: 100, paddingHorizontal: 40 },
+  empty: { textAlign: 'center', marginTop: 20, color: colors.text, fontSize: 18, fontWeight: 'bold' },
+  emptySub: { textAlign: 'center', marginTop: 10, color: colors.textSecondary, lineHeight: 20 }
 });

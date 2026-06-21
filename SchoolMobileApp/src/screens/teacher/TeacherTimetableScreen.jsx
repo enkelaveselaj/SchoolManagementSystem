@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
 import { spacing } from '../../styles';
 import academicService from '../../services/academicService';
-import schoolService from '../../services/schoolService';
 import { useTheme } from '../../hooks/useTheme';
 
 export default function TeacherTimetableScreen() {
@@ -24,25 +23,43 @@ export default function TeacherTimetableScreen() {
 
   const handleCreate = async () => {
     if (!formData.subjectId || !formData.classId || !formData.room) {
-      return Alert.alert('Error', 'Please fill all required fields');
+      return Alert.alert('Error', 'Subject ID, Class ID, and Room are required');
     }
 
     setLoading(true);
-    const res = await academicService.createTimetable(formData);
-    setLoading(false);
-
-    if (res.success) {
-      Alert.alert('Success', 'Timetable entry created');
-      loadTimetables();
-    } else {
-      Alert.alert('Error', res.error);
+    try {
+        const res = await academicService.createTimetable(formData);
+        if (res.success) {
+            if (Platform.OS === 'web') alert('Timetable entry created');
+            else Alert.alert('Success', 'Timetable entry created');
+            setFormData({
+                subjectId: '',
+                classId: '',
+                sectionId: '',
+                teacherId: '',
+                dayOfWeek: 'Monday',
+                startTime: '09:00',
+                endTime: '10:00',
+                room: ''
+            });
+            loadTimetables();
+        } else {
+            Alert.alert('Error', res.error || 'Failed to create entry');
+        }
+    } catch (err) {
+        Alert.alert('Error', 'An unexpected error occurred');
     }
+    setLoading(false);
   };
 
   const loadTimetables = async () => {
     setLoading(true);
-    const res = await academicService.getTimetables();
-    if (res.success) setTimetables(res.data);
+    try {
+        const res = await academicService.getTimetables();
+        if (res.success) setTimetables(res.data);
+    } catch (err) {
+        console.error('Failed to load timetables:', err);
+    }
     setLoading(false);
   };
 
@@ -57,6 +74,7 @@ export default function TeacherTimetableScreen() {
       <Text style={dynamicStyles.title}>Manage Timetable</Text>
 
       <View style={dynamicStyles.form}>
+        <Text style={dynamicStyles.label}>Course Details</Text>
         <TextInput
           style={dynamicStyles.input}
           placeholder="Subject ID"
@@ -67,7 +85,7 @@ export default function TeacherTimetableScreen() {
         />
         <TextInput
           style={dynamicStyles.input}
-          placeholder="Class ID"
+          placeholder="Class ID (Grade ID)"
           placeholderTextColor={colors.textSecondary}
           value={formData.classId}
           onChangeText={t => setFormData({...formData, classId: t})}
@@ -75,7 +93,7 @@ export default function TeacherTimetableScreen() {
         />
         <TextInput
           style={dynamicStyles.input}
-          placeholder="Section ID"
+          placeholder="Section ID (Optional)"
           placeholderTextColor={colors.textSecondary}
           value={formData.sectionId}
           onChangeText={t => setFormData({...formData, sectionId: t})}
@@ -91,27 +109,29 @@ export default function TeacherTimetableScreen() {
         />
         <TextInput
           style={dynamicStyles.input}
-          placeholder="Room"
+          placeholder="Room Number"
           placeholderTextColor={colors.textSecondary}
           value={formData.room}
           onChangeText={t => setFormData({...formData, room: t})}
         />
+
+        <Text style={dynamicStyles.label}>Timing</Text>
         <TextInput
           style={dynamicStyles.input}
-          placeholder="Start Time (HH:MM)"
+          placeholder="Start Time (e.g. 09:00:00)"
           placeholderTextColor={colors.textSecondary}
           value={formData.startTime}
           onChangeText={t => setFormData({...formData, startTime: t})}
         />
         <TextInput
           style={dynamicStyles.input}
-          placeholder="End Time (HH:MM)"
+          placeholder="End Time (e.g. 10:00:00)"
           placeholderTextColor={colors.textSecondary}
           value={formData.endTime}
           onChangeText={t => setFormData({...formData, endTime: t})}
         />
 
-        <Text style={dynamicStyles.label}>Day</Text>
+        <Text style={dynamicStyles.label}>Day of Week</Text>
         <View style={dynamicStyles.daysRow}>
             {days.slice(0, 5).map(d => (
                 <TouchableOpacity
@@ -124,17 +144,18 @@ export default function TeacherTimetableScreen() {
             ))}
         </View>
 
-        <TouchableOpacity style={dynamicStyles.button} onPress={handleCreate}>
-          <Text style={dynamicStyles.buttonText}>Add Entry</Text>
+        <TouchableOpacity style={dynamicStyles.button} onPress={handleCreate} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={dynamicStyles.buttonText}>Add Entry</Text>}
         </TouchableOpacity>
       </View>
 
       <Text style={dynamicStyles.sectionTitle}>Existing Timetable</Text>
-      {loading ? <ActivityIndicator size="large" color={colors.primary} /> : (
+      {loading && timetables.length === 0 ? <ActivityIndicator size="large" color={colors.primary} /> : (
+        timetables.length === 0 ? <Text style={dynamicStyles.empty}>No entries found.</Text> :
         timetables.map(t => (
           <View key={t.id} style={dynamicStyles.item}>
-              <Text style={dynamicStyles.itemText}>{t.dayOfWeek}: {t.startTime} - {t.endTime}</Text>
-              <Text style={dynamicStyles.itemSub}>Room {t.room} | Sub ID: {t.subjectId}</Text>
+              <Text style={dynamicStyles.itemText}>{t.day}: {t.startTime} - {t.endTime}</Text>
+              <Text style={dynamicStyles.itemSub}>Room {t.room} | Sub ID: {t.subjectId} | Class ID: {t.gradeId}</Text>
           </View>
         ))
       )}
@@ -148,7 +169,7 @@ const styles = (colors) => StyleSheet.create({
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.lg, color: colors.text },
   form: { backgroundColor: colors.card, padding: spacing.md, borderRadius: 16, marginBottom: spacing.lg, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 },
   input: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, marginBottom: 12, color: colors.text, fontSize: 16 },
-  label: { fontWeight: '700', marginBottom: 12, color: colors.primary, textTransform: 'uppercase', fontSize: 12 },
+  label: { fontWeight: '700', marginBottom: 12, color: colors.primary, textTransform: 'uppercase', fontSize: 12, marginTop: 10 },
   daysRow: { flexDirection: 'row', gap: 6, marginBottom: 20 },
   dayBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: colors.primary, alignItems: 'center' },
   dayBtnActive: { backgroundColor: colors.primary },
@@ -169,5 +190,6 @@ const styles = (colors) => StyleSheet.create({
     shadowRadius: 2,
   },
   itemText: { fontSize: 16, fontWeight: 'bold', color: colors.text },
-  itemSub: { fontSize: 13, color: colors.textSecondary, marginTop: 4 }
+  itemSub: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
+  empty: { textAlign: 'center', color: colors.textSecondary, marginTop: 10 }
 });

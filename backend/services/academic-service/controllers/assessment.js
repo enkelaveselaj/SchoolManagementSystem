@@ -1,8 +1,13 @@
 const assessmentService = require("../services/assessment");
 
 exports.create = async (req, res) => {
-  const data = await assessmentService.createAssessment(req.body);
-  res.json(data);
+  try {
+    const data = await assessmentService.createAssessment(req.body);
+    res.json(data);
+  } catch (error) {
+    console.error('Error creating assessment:', error);
+    res.status(500).json({ error: error.message || 'Failed to create assessment' });
+  }
 };
 
 exports.createWithScores = async (req, res) => {
@@ -15,8 +20,12 @@ exports.createWithScores = async (req, res) => {
 };
 
 exports.getAll = async (req, res) => {
-  const data = await assessmentService.getAllAssessments();
-  res.json(data);
+  try {
+    const data = await assessmentService.getAllAssessments();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 exports.getWithScores = async (req, res) => {
@@ -29,11 +38,15 @@ exports.getWithScores = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const result = await assessmentService.updateAssessment(
-    req.params.id,
-    req.body
-  );
-  res.json(result);
+  try {
+    const result = await assessmentService.updateAssessment(
+      req.params.id,
+      req.body
+    );
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 exports.updateStudentAssessmentScore = async (req, res) => {

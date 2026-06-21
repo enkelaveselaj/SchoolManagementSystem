@@ -71,5 +71,9 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: 'updated_at'
   });
 
+  Attendance.associate = (models) => {
+    Attendance.belongsTo(models.Subject, { foreignKey: 'subjectId', as: 'subject' });
+  };
+
   return Attendance;
 };

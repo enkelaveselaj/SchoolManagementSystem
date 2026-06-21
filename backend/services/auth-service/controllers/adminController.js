@@ -1,4 +1,12 @@
-import { createUser, getParentsWithStudents, linkParentToStudent, assignParentToStudents, createTeacher, getParentChildren } from "../services/adminService.js";
+import {
+  createUser,
+  getParentsWithStudents,
+  linkParentToStudent,
+  assignParentToStudents,
+  createTeacher,
+  getParentChildren,
+  getAllUsersByRole
+} from "../services/adminService.js";
 
 export const createUserController = async (req, res) => {
   try {
@@ -12,9 +20,7 @@ export const createUserController = async (req, res) => {
 export const linkParentStudentController = async (req, res) => {
   try {
     const { parent_id, student_id } = req.body;
-
     const result = await linkParentToStudent(parent_id, student_id, req.user);
-
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -58,4 +64,32 @@ export const getParentChildrenController = async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+};
+
+export const deleteUserController = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+export const updateUserController = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    res.json({ message: "User updated successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+export const syncUsersController = async (req, res) => {
+    try {
+        const { role } = req.query;
+        const users = await getAllUsersByRole(role);
+        res.json(users);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 };

@@ -10,30 +10,39 @@ exports.create = async (req, res) => {
 };
 
 exports.calculate = async (req, res) => {
-  const { studentId, subjectId, teacherId } = req.body;
-
-  const result = await gradeService.calculateFinalGrade(
-    studentId,
-    subjectId,
-    teacherId
-  );
-
-  res.json(result);
+  try {
+    const { studentId, subjectId, teacherId } = req.body;
+    const result = await gradeService.calculateFinalGrade(
+        studentId,
+        subjectId,
+        teacherId
+    );
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 exports.getAll = async (req, res) => {
-  const grades = await gradeService.getGrades();
-  res.json(grades);
+  try {
+    const { studentId } = req.query;
+    const grades = await gradeService.getGrades(studentId);
+    res.json(grades);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 exports.manualUpdate = async (req, res) => {
-  const { studentId, subjectId, value } = req.body;
-
-  const result = await gradeService.manualUpdate(
-    studentId,
-    subjectId,
-    value
-  );
-
-  res.json(result);
+  try {
+    const { studentId, subjectId, value } = req.body;
+    const result = await gradeService.manualUpdate(
+        studentId,
+        subjectId,
+        value
+    );
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };

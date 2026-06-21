@@ -5,20 +5,23 @@ import adminService from '../../services/adminService';
 import studentManagementService from '../../services/studentManagementService';
 import { useTheme } from '../../hooks/useTheme';
 
-export default function CreateUserScreen({ navigation }) {
+export default function CreateUserScreen({ navigation, route }) {
   const { colors } = useTheme();
+  const editUser = route.params?.editUser;
+  const editType = route.params?.editType;
+
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
+    first_name: editUser?.firstName || editUser?.first_name || '',
+    last_name: editUser?.lastName || editUser?.last_name || '',
+    email: editUser?.email || '',
     password: '',
-    role: 'Student',
+    role: editType || editUser?.role || 'Student',
     // Teacher specific
-    employeeId: '',
-    specialization: '',
+    employeeId: editUser?.employeeId || '',
+    specialization: editUser?.specialization || '',
     // Student specific
-    dateOfBirth: '',
-    gender: 'male',
+    dateOfBirth: editUser?.dateOfBirth || '',
+    gender: editUser?.gender || 'male',
   });
   const [loading, setLoading] = useState(false);
 
@@ -27,67 +30,83 @@ export default function CreateUserScreen({ navigation }) {
   const handleCreate = async () => {
     const { first_name, last_name, email, password, role } = formData;
 
-    if (!first_name || !last_name || !email || !password) {
-      Alert.alert('Error', 'Required basic fields are missing');
+    if (!first_name || !last_name || !email || (!password && !editUser)) {
+      Alert.alert('Error', 'Required fields are missing');
       return;
     }
 
     setLoading(true);
     try {
-      if (role === 'Teacher') {
-        // Teacher creation handles both Auth and Teacher record in one backend call
-        const teacherRes = await adminService.createTeacher({
-          firstName: first_name,
-          lastName: last_name,
-          email,
-          password,
-          employeeId: formData.employeeId,
-          specialization: formData.specialization,
-          phone: 'N/A',
-          qualification: 'N/A',
-          experience: '0',
-          hireDate: new Date().toISOString().split('T')[0],
-          emergencyContact: 'N/A',
-          emergencyPhone: 'N/A',
-        });
-        if (!teacherRes.success) throw new Error(teacherRes.error);
-      } else {
-        // 1. Create Auth User for other roles
-        const authRes = await adminService.createUser({
-          first_name,
-          last_name,
-          email,
-          password,
-          role
-        });
+      if (editUser) {
+        // Handle Update
+        const updateRes = await adminService.updateUser(editUser.userId || editUser.id, formData);
+        if (!updateRes.success) throw new Error(updateRes.error);
 
-        if (!authRes.success) {
-          throw new Error(authRes.error);
+        if (Platform.OS === 'web') {
+            alert('User updated successfully');
+            navigation.goBack();
+        } else {
+            Alert.alert('Success', 'User updated successfully', [
+              { text: 'OK', onPress: () => navigation.goBack() }
+            ]);
+        }
+      } else {
+        // Handle Create
+        if (role === 'Teacher') {
+            // Teacher creation handles both Auth and Teacher record in one backend call
+            const teacherRes = await adminService.createTeacher({
+              firstName: first_name,
+              lastName: last_name,
+              email,
+              password,
+              employeeId: formData.employeeId,
+              specialization: formData.specialization,
+              phone: 'N/A',
+              qualification: 'N/A',
+              experience: '0',
+              hireDate: new Date().toISOString().split('T')[0],
+              emergencyContact: 'N/A',
+              emergencyPhone: 'N/A',
+            });
+            if (!teacherRes.success) throw new Error(teacherRes.error);
+        } else {
+            // 1. Create Auth User for other roles
+            const authRes = await adminService.createUser({
+              first_name,
+              last_name,
+              email,
+              password,
+              role
+            });
+
+            if (!authRes.success) {
+              throw new Error(authRes.error);
+            }
+
+            const userId = authRes.data.id;
+
+            // 2. Create Student-specific record if needed
+            if (role === 'Student') {
+              const studentRes = await studentManagementService.createStudent({
+                firstName: first_name,
+                lastName: last_name,
+                email,
+                gender: formData.gender,
+                dateOfBirth: formData.dateOfBirth,
+                userId
+              });
+              if (!studentRes.success) throw new Error(studentRes.error);
+            }
         }
 
-        const userId = authRes.data.id;
-
-        // 2. Create Student-specific record if needed
-        if (role === 'Student') {
-          const studentRes = await studentManagementService.createStudent({
-            firstName: first_name,
-            lastName: last_name,
-            email,
-            gender: formData.gender,
-            dateOfBirth: formData.dateOfBirth,
-            userId
-          });
-          if (!studentRes.success) throw new Error(studentRes.error);
+        if (Platform.OS === 'web') {
+            alert(`${role} created successfully`);
+            navigation.goBack();
+        } else {
+            Alert.alert('Success', `${role} created successfully`, [
+              { text: 'OK', onPress: () => navigation.goBack() }
+            ]);
         }
-      }
-
-      if (Platform.OS === 'web') {
-        alert(`${role} created successfully`);
-        navigation.goBack();
-      } else {
-        Alert.alert('Success', `${role} created successfully`, [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
       }
     } catch (error) {
       Alert.alert('Error', error.message || 'Operation failed');
@@ -110,7 +129,8 @@ export default function CreateUserScreen({ navigation }) {
                 dynamicStyles.roleButton,
                 formData.role === r && dynamicStyles.roleButtonActive
               ]}
-              onPress={() => setFormData({ ...formData, role: r })}
+              onPress={() => !editUser && setFormData({ ...formData, role: r })}
+              disabled={!!editUser}
             >
               <Text style={[
                 dynamicStyles.roleButtonText,
@@ -146,17 +166,22 @@ export default function CreateUserScreen({ navigation }) {
           placeholder="Email"
           placeholderTextColor={colors.textSecondary}
           autoCapitalize="none"
+          editable={!editUser}
         />
 
-        <Text style={dynamicStyles.label}>Password</Text>
-        <TextInput
-          style={dynamicStyles.input}
-          value={formData.password}
-          onChangeText={(text) => setFormData({ ...formData, password: text })}
-          placeholder="Password"
-          placeholderTextColor={colors.textSecondary}
-          secureTextEntry
-        />
+        {!editUser && (
+          <>
+            <Text style={dynamicStyles.label}>Password</Text>
+            <TextInput
+              style={dynamicStyles.input}
+              value={formData.password}
+              onChangeText={(text) => setFormData({ ...formData, password: text })}
+              placeholder="Password"
+              placeholderTextColor={colors.textSecondary}
+              secureTextEntry
+            />
+          </>
+        )}
 
         {formData.role === 'Teacher' && (
           <>
@@ -212,7 +237,7 @@ export default function CreateUserScreen({ navigation }) {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={dynamicStyles.submitButtonText}>Create Account</Text>
+            <Text style={dynamicStyles.submitButtonText}>{editUser ? 'Update Account' : 'Create Account'}</Text>
           )}
         </TouchableOpacity>
       </View>

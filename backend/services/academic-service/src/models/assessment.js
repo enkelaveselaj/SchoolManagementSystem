@@ -1,21 +1,24 @@
 module.exports = (sequelize, DataTypes) => {
   const Assessment = sequelize.define("Assessment", {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     subjectId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'subject_id'
     },
     classId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
+      field: 'class_id'
     },
     teacherId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'teacher_id'
     },
     title: {
       type: DataTypes.STRING,
@@ -29,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.FLOAT,
       allowNull: false,
       defaultValue: 100,
+      field: 'max_score'
     },
     weight: {
       type: DataTypes.FLOAT,
@@ -36,17 +40,18 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 10,
     },
     date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: false,
     },
   }, {
-    // This will automatically add the new columns to the table
-    // if they don't exist, Sequelize will create them
+    tableName: 'Assessments',
+    timestamps: true,
     alter: true
   });
 
   Assessment.associate = (models) => {
     Assessment.hasMany(models.AssessmentScore, { foreignKey: 'assessmentId', as: 'scores' });
+    Assessment.belongsTo(models.Subject, { foreignKey: 'subjectId', as: 'subject' });
   };
 
   return Assessment;

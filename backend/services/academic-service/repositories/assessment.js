@@ -1,26 +1,31 @@
-const { Assessment } = require("../src/models");
-const authServiceClient = require("../services/authServiceClient");
+const { Assessment, Subject } = require("../src/models");
 
 class AssessmentRepository {
   async create(data) {
-    
-    // Only validate teacher since assessments are now class-based, not student-based
-    await authServiceClient.validateUser(data.teacherId, 'Teacher');
-    
-    return Assessment.create(data);
+    return Assessment.create({
+        ...data,
+        subjectId: parseInt(data.subjectId),
+        teacherId: parseInt(data.teacherId),
+        classId: data.classId ? parseInt(data.classId) : null
+    });
   }
 
   async findAll() {
-    return Assessment.findAll();
+    return Assessment.findAll({
+        include: [{ model: Subject, as: 'subject' }]
+    });
   }
 
   async findById(id) {
-    return Assessment.findByPk(id);
+    return Assessment.findByPk(parseInt(id), {
+        include: [{ model: Subject, as: 'subject' }]
+    });
   }
 
   async findByIdWithScores(id) {
-    return Assessment.findByPk(id, {
+    return Assessment.findByPk(parseInt(id), {
       include: [
+        { model: Subject, as: 'subject' },
         {
           model: require('../src/models').AssessmentScore,
           as: 'scores'
@@ -30,47 +35,18 @@ class AssessmentRepository {
   }
 
   async findByStudentAndSubject(studentId, subjectId) {
-    
-    await authServiceClient.validateUser(studentId, 'Student');
-    
     return Assessment.findAll({
-      where: { studentId, subjectId },
+      where: { subjectId: parseInt(subjectId) },
+      include: [{ model: Subject, as: 'subject' }]
     });
   }
 
   async update(id, data) {
-    
-    // Only validate teacher since assessments are now class-based, not student-based
-    if (data.teacherId) {
-      await authServiceClient.validateUser(data.teacherId, 'Teacher');
-    }
-    
-    return Assessment.update(data, { where: { id } });
+    return Assessment.update(data, { where: { id: parseInt(id) } });
   }
 
   async delete(id) {
-    return Assessment.destroy({ where: { id } });
-  }
-
-  async getAssessmentsWithUserDetails(filters = {}) {
-    const assessments = await Assessment.findAll({
-      where: filters,
-    });
-
-  
-    const enrichedAssessments = await Promise.all(
-      assessments.map(async (assessment) => {
-        // Only get teacher details since assessments are now class-based, not student-based
-        const teacher = await authServiceClient.getUserById(assessment.teacherId);
-
-        return {
-          ...assessment.toJSON(),
-          teacher,
-        };
-      })
-    );
-
-    return enrichedAssessments;
+    return Assessment.destroy({ where: { id: parseInt(id) } });
   }
 }
 

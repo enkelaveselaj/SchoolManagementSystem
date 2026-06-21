@@ -27,16 +27,12 @@ app.use("/assessment-scores", assessmentScoreRoutes);
 app.use("/announcements", announcementRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-const { Timetable, AssessmentScore } = require("./models");
-
-sequelize.sync().then(() => {
-  // Force sync Timetable and AssessmentScore models to create tables if they don't exist
-  return Promise.all([
-    Timetable.sync({ force: false, alter: true }),
-    AssessmentScore.sync({ force: false, alter: true })
-  ]);
-}).then(() => {
+// Use { alter: true } to keep data while updating schema
+sequelize.sync({ alter: true }).then(() => {
+  console.log("Academic service database synced ✅");
   app.listen(process.env.PORT, () => {
     console.log(`Academic service running on port ${process.env.PORT}`);
   });
+}).catch(err => {
+  console.error("Failed to sync database:", err);
 });

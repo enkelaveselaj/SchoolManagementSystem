@@ -14,7 +14,7 @@ export default function AdminAcademicSetupScreen() {
   const [teachers, setTeachers] = useState([]);
   const [classes, setClasses] = useState([]);
 
-  const [newYear, setNewYear] = useState({ name: '', startDate: '', endDate: '' });
+  const [newYear, setNewYear] = useState({ name: '', startYear: '', endYear: '' });
   const [newSubject, setNewSubject] = useState({ name: '', code: '' });
   const [assignment, setAssignment] = useState({ teacherId: '', subjectId: '', classId: '' });
 
@@ -42,11 +42,25 @@ export default function AdminAcademicSetupScreen() {
   };
 
   const handleCreateYear = async () => {
-    if (!newYear.name) return Alert.alert('Error', 'Year name is required');
-    const res = await schoolService.createAcademicYear(newYear);
+    if (!newYear.name || !newYear.startYear || !newYear.endYear) {
+        return Alert.alert('Error', 'Name, Start Year, and End Year are required');
+    }
+
+    // Ensure numeric values
+    const payload = {
+        name: newYear.name,
+        startYear: parseInt(newYear.startYear),
+        endYear: parseInt(newYear.endYear)
+    };
+
+    if (isNaN(payload.startYear) || isNaN(payload.endYear)) {
+        return Alert.alert('Error', 'Start Year and End Year must be numbers');
+    }
+
+    const res = await schoolService.createAcademicYear(payload);
     if (res.success) {
       Alert.alert('Success', 'Academic Year created');
-      setNewYear({ name: '', startDate: '', endDate: '' });
+      setNewYear({ name: '', startYear: '', endYear: '' });
       loadData();
     } else {
       Alert.alert('Error', res.error);
@@ -132,13 +146,15 @@ export default function AdminAcademicSetupScreen() {
       <View style={dynamicStyles.section}>
         <Text style={dynamicStyles.sectionTitle}>Academic Years</Text>
         <View style={dynamicStyles.form}>
-          <TextInput style={dynamicStyles.input} placeholder="Year (e.g. 2024-2025)" placeholderTextColor={colors.textSecondary} value={newYear.name} onChangeText={t => setNewYear({...newYear, name: t})} />
+          <TextInput style={dynamicStyles.input} placeholder="Year Name (e.g. 2024-2025)" placeholderTextColor={colors.textSecondary} value={newYear.name} onChangeText={t => setNewYear({...newYear, name: t})} />
+          <TextInput style={dynamicStyles.input} placeholder="Start Year (e.g. 2024)" placeholderTextColor={colors.textSecondary} value={newYear.startYear} onChangeText={t => setNewYear({...newYear, startYear: t})} keyboardType="numeric" />
+          <TextInput style={dynamicStyles.input} placeholder="End Year (e.g. 2025)" placeholderTextColor={colors.textSecondary} value={newYear.endYear} onChangeText={t => setNewYear({...newYear, endYear: t})} keyboardType="numeric" />
           <TouchableOpacity style={[dynamicStyles.button, { backgroundColor: colors.textSecondary }]} onPress={handleCreateYear}>
             <Text style={dynamicStyles.buttonText}>Add Year</Text>
           </TouchableOpacity>
         </View>
         {years.map(y => (
-          <View key={y.id} style={dynamicStyles.item}><Text style={dynamicStyles.itemText}><Text style={dynamicStyles.bold}>ID: {y.id}</Text> - {y.name}</Text></View>
+          <View key={y.id} style={dynamicStyles.item}><Text style={dynamicStyles.itemText}><Text style={dynamicStyles.bold}>ID: {y.id}</Text> - {y.name} ({y.startYear}-{y.endYear})</Text></View>
         ))}
       </View>
 

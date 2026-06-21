@@ -54,6 +54,24 @@ class AdminService {
       return { success: false, error: error.response?.data?.error || 'Failed to assign students' };
     }
   }
+
+  async deleteUser(userId) {
+    try {
+      const response = await authApi.delete(`/admin/users/${userId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || 'Failed to delete user' };
+    }
+  }
+
+  async updateUser(userId, userData) {
+    try {
+      const response = await authApi.put(`/admin/users/${userId}`, userData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || 'Failed to update user' };
+    }
+  }
 }
 
 export default new AdminService();

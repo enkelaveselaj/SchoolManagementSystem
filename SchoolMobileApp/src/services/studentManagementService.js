@@ -19,6 +19,15 @@ class StudentManagementService {
     }
   }
 
+  async getStudentsByClass(classId) {
+    try {
+      const response = await api.get(`/students/class/${classId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || 'Failed to fetch students by class' };
+    }
+  }
+
   async updateStudent(id, data) {
     try {
       const response = await api.put(`/students/${id}`, data);

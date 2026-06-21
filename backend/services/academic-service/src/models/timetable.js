@@ -33,5 +33,9 @@ module.exports = (sequelize, DataTypes) => {
     alter: true
   });
 
+  Timetable.associate = (models) => {
+    Timetable.belongsTo(models.Subject, { foreignKey: 'subjectId', as: 'subject' });
+  };
+
   return Timetable;
 };

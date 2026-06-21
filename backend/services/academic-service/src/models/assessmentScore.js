@@ -1,17 +1,19 @@
 module.exports = (sequelize, DataTypes) => {
   const AssessmentScore = sequelize.define("AssessmentScore", {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     assessmentId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'assessment_id'
     },
     studentId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'student_id'
     },
     score: {
       type: DataTypes.FLOAT,
@@ -20,9 +22,11 @@ module.exports = (sequelize, DataTypes) => {
     submittedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
+      field: 'submitted_at'
     },
     gradedAt: {
       type: DataTypes.DATE,
+      field: 'graded_at'
     },
     remarks: {
       type: DataTypes.TEXT,
@@ -31,8 +35,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     tableName: 'AssessmentScores',
     timestamps: true,
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
+    alter: true
   });
 
   AssessmentScore.associate = (models) => {

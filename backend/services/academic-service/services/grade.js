@@ -2,6 +2,7 @@ const gradeRepo = require("../repositories/grade");
 const assessmentRepo = require("../repositories/assessment");
 const notificationService = require("./notificationService");
 const authServiceClient = require("./authServiceClient");
+const { Grade, Subject } = require("../src/models");
 
 class GradeService {
   async createGrade(data) {
@@ -58,38 +59,27 @@ class GradeService {
         finalizedAt: new Date(),
       });
 
-      // Send notification to student
-      try {
-        const student = await authServiceClient.getUserById(studentId);
-        await notificationService.notifyStudentGradePosted(student.email, `Subject ${subjectId}`, finalValue);
-      } catch (err) {
-        console.warn('Failed to send grade notification:', err.message);
-      }
-
       return { message: "Grade updated", value: finalValue };
     } else {
-      const newGrade = await gradeRepo.create({
+      return gradeRepo.create({
         studentId,
         subjectId,
         teacherId,
         value: finalValue,
         finalizedAt: new Date(),
       });
-
-      // Send notification to student
-      try {
-        const student = await authServiceClient.getUserById(studentId);
-        await notificationService.notifyStudentGradePosted(student.email, `Subject ${subjectId}`, finalValue);
-      } catch (err) {
-        console.warn('Failed to send grade notification:', err.message);
-      }
-
-      return newGrade;
     }
   }
 
-  async getGrades() {
-    return gradeRepo.findAll();
+  async getGrades(studentId = null) {
+    const where = {};
+    if (studentId) where.studentId = studentId;
+
+    // Use models directly to include subjects
+    return Grade.findAll({
+      where,
+      include: [{ model: Subject, as: 'subject' }]
+    });
   }
 
   async manualUpdate(studentId, subjectId, value) {
@@ -100,23 +90,10 @@ class GradeService {
 
     if (!existing) throw new Error("Grade not found");
 
-    const updated = await gradeRepo.updateByStudentAndSubject(studentId, subjectId, {
+    return gradeRepo.updateByStudentAndSubject(studentId, subjectId, {
       value,
       finalizedAt: new Date(),
     });
-
-    try {
-      const student = await authServiceClient.getUserById(studentId);
-      await notificationService.notifyStudentGradePosted(
-        student.email,
-        `Subject ${subjectId}`,
-        updated.value
-      );
-    } catch (err) {
-      console.warn('Failed to send grade notification on manual update:', err.message);
-    }
-
-    return updated;
   }
 }
 

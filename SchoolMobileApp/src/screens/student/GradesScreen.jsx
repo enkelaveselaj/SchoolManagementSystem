@@ -4,6 +4,7 @@ import { useStudent } from '../../hooks/useStudent';
 import GradeCard from '../../components/cards/GradeCard';
 import { spacing } from '../../styles';
 import { useTheme } from '../../hooks/useTheme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function GradesScreen() {
   const { colors } = useTheme();
@@ -30,7 +31,9 @@ export default function GradesScreen() {
     );
   }
 
-  const avgGrade = grades.length > 0 ? (grades.reduce((sum, g) => sum + g.grade, 0) / grades.length).toFixed(2) : 0;
+  const avgGrade = grades.length > 0
+    ? (grades.reduce((sum, g) => sum + g.value, 0) / grades.length).toFixed(1)
+    : "0.0";
 
   return (
     <ScrollView
@@ -39,32 +42,34 @@ export default function GradesScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.primary]} tintColor={colors.primary} />
       }
     >
-      {/* Header Stats */}
       <View style={dynamicStyles.header}>
         <View style={dynamicStyles.statBox}>
-          <Text style={dynamicStyles.statLabel}>Total Grades</Text>
+          <Text style={dynamicStyles.statLabel}>Total Subjects</Text>
           <Text style={dynamicStyles.statValue}>{grades.length}</Text>
         </View>
         <View style={dynamicStyles.statBox}>
-          <Text style={dynamicStyles.statLabel}>Average</Text>
+          <Text style={dynamicStyles.statLabel}>GPA Average</Text>
           <Text style={dynamicStyles.statValue}>{avgGrade}</Text>
         </View>
       </View>
 
-      {/* Grades List */}
       <View style={dynamicStyles.content}>
-        <Text style={dynamicStyles.title}>All Grades</Text>
+        <Text style={dynamicStyles.title}>Term Grades</Text>
         {grades.length > 0 ? (
-          grades.map((grade, index) => (
+          grades.map((grade) => (
             <GradeCard
-              key={index}
-              subject={grade.subject}
-              grade={grade.grade}
-              date={grade.date}
+              key={grade.id}
+              subject={grade.subject?.name || `Subject ${grade.subjectId}`}
+              grade={grade.value}
+              date={grade.finalizedAt || grade.createdAt}
             />
           ))
         ) : (
-          <Text style={dynamicStyles.emptyText}>No grades yet</Text>
+          <View style={dynamicStyles.emptyContainer}>
+            <Ionicons name="school-outline" size={64} color={colors.textSecondary} />
+            <Text style={dynamicStyles.emptyText}>No grades published yet</Text>
+            <Text style={dynamicStyles.emptySub}>Grades appear here once your teachers finalize the term scores.</Text>
+          </View>
         )}
       </View>
     </ScrollView>
@@ -72,54 +77,26 @@ export default function GradesScreen() {
 }
 
 const styles = (colors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
-    backgroundColor: colors.primary,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
-  statBox: {
-    flex: 1,
-    marginHorizontal: spacing.sm,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    padding: spacing.md,
-    borderRadius: 12,
-  },
-  statLabel: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 12,
-    marginBottom: spacing.sm,
-  },
-  statValue: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  content: {
     padding: spacing.lg,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: spacing.md,
-    color: colors.text,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: colors.textSecondary,
-    marginTop: spacing.lg,
-  },
+  statBox: { flex: 1, alignItems: 'center' },
+  statLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '600' },
+  statValue: { color: '#FFFFFF', fontSize: 28, fontWeight: 'bold', marginTop: 4 },
+  content: { padding: spacing.lg },
+  title: { fontSize: 20, fontWeight: 'bold', marginBottom: spacing.md, color: colors.text },
+  emptyContainer: { alignItems: 'center', marginTop: 60, paddingHorizontal: 40 },
+  emptyText: { fontSize: 18, fontWeight: 'bold', color: colors.textSecondary, marginTop: 20 },
+  emptySub: { textAlign: 'center', color: colors.textSecondary, marginTop: 10, lineHeight: 20 },
 });

@@ -13,10 +13,11 @@ class SocketService {
 
     this.socket = io(SOCKET_URL, {
       auth: { token },
+      transports: ['websocket'], // Prefer websocket to avoid polling spam
       reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
+      reconnectionAttempts: 3,
     });
 
     this.socket.on('connect', () => {

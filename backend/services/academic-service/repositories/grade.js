@@ -1,84 +1,53 @@
-const { Grade } = require("../src/models");
-const authServiceClient = require("../services/authServiceClient");
+const { Grade, Subject } = require("../src/models");
 
 class GradeRepository {
   async create(data) {
-    // Validate student and teacher IDs with auth-service
-    await authServiceClient.validateUser(data.studentId, 'Student');
-    await authServiceClient.validateUser(data.teacherId, 'Teacher');
-    
-    return Grade.create(data);
+    return Grade.create({
+        ...data,
+        studentId: parseInt(data.studentId),
+        subjectId: parseInt(data.subjectId),
+        teacherId: parseInt(data.teacherId),
+        value: parseFloat(data.value)
+    });
   }
 
   async findAll() {
-    return Grade.findAll();
+    return Grade.findAll({
+        include: [{ model: Subject, as: 'subject' }]
+    });
   }
 
   async findByStudentAndSubject(studentId, subjectId) {
-    // Validate student ID with auth-service
-    await authServiceClient.validateUser(studentId, 'Student');
-    
     return Grade.findOne({
-      where: { studentId, subjectId },
+      where: {
+          studentId: parseInt(studentId),
+          subjectId: parseInt(subjectId)
+      },
+      include: [{ model: Subject, as: 'subject' }]
     });
   }
 
   async updateByStudentAndSubject(studentId, subjectId, data) {
-    // Validate student ID with auth-service
-    await authServiceClient.validateUser(studentId, 'Student');
-    
-    // If updating teacherId, validate it
-    if (data.teacherId) {
-      await authServiceClient.validateUser(data.teacherId, 'Teacher');
-    }
-    
     return Grade.update(data, {
-      where: { studentId, subjectId },
+      where: {
+          studentId: parseInt(studentId),
+          subjectId: parseInt(subjectId)
+      },
     });
-  }
-
-  async getGradesWithUserDetails(filters = {}) {
-    const grades = await Grade.findAll({
-      where: filters,
-    });
-
-    // Enrich with user details from auth-service
-    const enrichedGrades = await Promise.all(
-      grades.map(async (grade) => {
-        const [student, teacher] = await Promise.all([
-          authServiceClient.getUserById(grade.studentId),
-          authServiceClient.getUserById(grade.teacherId),
-        ]);
-
-        return {
-          ...grade.toJSON(),
-          student,
-          teacher,
-        };
-      })
-    );
-
-    return enrichedGrades;
   }
 
   async findById(id) {
-    return Grade.findByPk(id);
+    return Grade.findByPk(id, {
+        include: [{ model: Subject, as: 'subject' }]
+    });
   }
 
   async update(id, data) {
-    // If updating studentId or teacherId, validate them
-    if (data.studentId) {
-      await authServiceClient.validateUser(data.studentId, 'Student');
-    }
-    if (data.teacherId) {
-      await authServiceClient.validateUser(data.teacherId, 'Teacher');
-    }
-    
-    return Grade.update(data, { where: { id } });
+    return Grade.update(data, { where: { id: parseInt(id) } });
   }
 
   async delete(id) {
-    return Grade.destroy({ where: { id } });
+    return Grade.destroy({ where: { id: parseInt(id) } });
   }
 }
 

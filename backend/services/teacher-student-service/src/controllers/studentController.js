@@ -50,3 +50,27 @@ export const deleteStudent = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const getStudentsByClass = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const students = await db.Student.findAll({
+      where: { classId: parseInt(classId) }
+    });
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getStudentsBySection = async (req, res) => {
+  try {
+    const { sectionId } = req.params;
+    const students = await db.Student.findAll({
+      where: { sectionId: parseInt(sectionId) }
+    });
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

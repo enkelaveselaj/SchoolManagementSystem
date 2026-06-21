@@ -6,7 +6,6 @@
     "sdkVersion": "54.0.0",
     "platforms": ["ios", "android", "web"],
     "orientation": "portrait",
-    "assetBundlePatterns": ["**/*"],
-    "updates": {"fallbackToCacheTimeout": 0}
+    "assetBundlePatterns": ["**/*"]
   }
 }

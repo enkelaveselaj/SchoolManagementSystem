@@ -1,42 +1,86 @@
 const assessmentScoreRepo = require("../repositories/assessmentScore");
 const authServiceClient = require("./authServiceClient");
 const notificationService = require("./notificationService");
-const { Assessment } = require("../src/models");
 
 class AssessmentScoreService {
   async createAssessmentScore(data) {
     try {
-      // Validate that score doesn't exceed max score
-      const assessment = await Assessment.findByPk(data.assessmentId);
+      const models = require("../src/models");
+      const assessmentId = parseInt(data.assessmentId);
+
+      const assessment = await models.Assessment.findByPk(assessmentId);
       if (!assessment) {
-        throw new Error('Assessment not found');
+        throw new Error(`Assessment with ID ${assessmentId} not found`);
       }
 
-      if (data.score > assessment.maxScore) {
-        throw new Error(`Score cannot exceed maximum score of ${assessment.maxScore}`);
+      const score = parseFloat(data.score);
+      if (score > assessment.maxScore) {
+        throw new Error(`Score ${score} cannot exceed maximum score of ${assessment.maxScore}`);
       }
       
-      const scoreRecord = await assessmentScoreRepo.create({
-        ...data,
-        gradedAt: new Date()
-      });
+      let scoreRecord = await assessmentScoreRepo.findByAssessmentAndStudent(assessmentId, data.studentId);
 
-      const fullScoreRecord = await assessmentScoreRepo.findById(scoreRecord.id);
+      if (scoreRecord) {
+          await assessmentScoreRepo.update(scoreRecord.id, {
+              score: score,
+              remarks: data.remarks,
+              gradedAt: new Date()
+          });
+          scoreRecord = await assessmentScoreRepo.findById(scoreRecord.id);
+      } else {
+          scoreRecord = await assessmentScoreRepo.create({
+            ...data,
+            assessmentId,
+            score,
+            gradedAt: new Date()
+          });
+      }
 
       try {
         const student = await authServiceClient.getUserById(data.studentId);
         await notificationService.notifyStudentAssessmentScored(
           student.email,
-          assessment.name || assessment.title || `Assessment ${data.assessmentId}`,
-          data.score,
+          assessment.title || `Assessment ${assessmentId}`,
+          score,
           assessment.maxScore
         );
       } catch (notifyError) {
-        console.warn('Failed to send assessment score notification on create:', notifyError.message);
+        console.warn('Notification failed:', notifyError.message);
       }
 
-      return fullScoreRecord;
+      return scoreRecord;
     } catch (error) {
+      console.error('Error in createAssessmentScore:', error);
+      throw error;
+    }
+  }
+
+  async batchCreateScores(assessmentId, scores) {
+    try {
+      const models = require("../src/models");
+      const id = parseInt(assessmentId);
+      const assessment = await models.Assessment.findByPk(id);
+
+      if (!assessment) {
+        throw new Error(`Assessment not found (ID: ${assessmentId})`);
+      }
+
+      const results = [];
+      for (const scoreData of scores) {
+        if (parseFloat(scoreData.score) > assessment.maxScore) continue;
+
+        const result = await this.createAssessmentScore({
+            assessmentId: id,
+            studentId: parseInt(scoreData.studentId),
+            score: scoreData.score,
+            remarks: scoreData.remarks
+        });
+        results.push(result);
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Batch save error:', error);
       throw error;
     }
   }
@@ -45,186 +89,34 @@ class AssessmentScoreService {
     return assessmentScoreRepo.findAll();
   }
 
-  async getAssessmentScoreById(id) {
-    return assessmentScoreRepo.findById(id);
-  }
-
   async getScoresByAssessment(assessmentId) {
-    return assessmentScoreRepo.findByAssessment(assessmentId);
+    return assessmentScoreRepo.findByAssessment(parseInt(assessmentId));
   }
 
   async getScoresByStudent(studentId) {
-    return assessmentScoreRepo.findByStudent(studentId);
+    return assessmentScoreRepo.findByStudent(parseInt(studentId));
   }
 
   async getScoresByStudentAndSubject(studentId, subjectId) {
-    return assessmentScoreRepo.findByStudentAndSubject(studentId, subjectId);
-  }
-
-  async upsertAssessmentScoreByAssessmentAndStudent(assessmentId, studentId, data) {
-    try {
-      const assessment = await Assessment.findByPk(assessmentId);
-      if (!assessment) {
-        throw new Error('Assessment not found');
-      }
-
-      if (data.score > assessment.maxScore) {
-        throw new Error(`Score cannot exceed maximum score of ${assessment.maxScore}`);
-      }
-
-      let scoreRecord = await assessmentScoreRepo.findByAssessmentAndStudent(assessmentId, studentId);
-      if (scoreRecord) {
-        await assessmentScoreRepo.update(scoreRecord.id, {
-          ...data,
-          gradedAt: new Date()
-        });
-      } else {
-        scoreRecord = await assessmentScoreRepo.create({
-          assessmentId,
-          studentId,
-          score: data.score,
-          remarks: data.remarks,
-          gradedAt: new Date()
-        });
-      }
-
-      const updatedScore = await assessmentScoreRepo.findById(scoreRecord.id);
-
-      try {
-        const student = await authServiceClient.getUserById(studentId);
-        await notificationService.notifyStudentAssessmentScored(
-          student.email,
-          assessment.name || assessment.title || `Assessment ${assessmentId}`,
-          updatedScore.score,
-          assessment.maxScore
-        );
-      } catch (notifyError) {
-        console.warn('Failed to send assessment score notification on assessment/student upsert:', notifyError.message);
-      }
-
-      return updatedScore;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async updateAssessmentScore(id, data) {
-    try {
-      // Validate that score doesn't exceed max score
-      const existingScore = await assessmentScoreRepo.findById(id);
-      if (!existingScore) {
-        throw new Error('Existing assessment score not found');
-      }
-
-      if (data.score > existingScore.assessment.maxScore) {
-        throw new Error(`Score cannot exceed maximum score of ${existingScore.assessment.maxScore}`);
-      }
-      
-      await assessmentScoreRepo.update(id, {
-        ...data,
-        gradedAt: new Date()
-      });
-
-      const updatedScore = await assessmentScoreRepo.findById(id);
-
-      try {
-        const student = await authServiceClient.getUserById(updatedScore.studentId);
-        await notificationService.notifyStudentAssessmentScored(
-          student.email,
-          updatedScore.assessment.name || updatedScore.assessment.title || `Assessment ${updatedScore.assessmentId}`,
-          updatedScore.score,
-          updatedScore.assessment.maxScore
-        );
-      } catch (notifyError) {
-        console.warn('Failed to send assessment score notification on update:', notifyError.message);
-      }
-
-      return updatedScore;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async deleteAssessmentScore(id) {
-    return assessmentScoreRepo.delete(id);
+    return assessmentScoreRepo.findByStudentAndSubject(parseInt(studentId), parseInt(subjectId));
   }
 
   async calculateStudentGrade(studentId, subjectId) {
     try {
-      const averageScore = await assessmentScoreRepo.calculateAverageScore(studentId, subjectId);
+      const averageScore = await assessmentScoreRepo.calculateAverageScore(parseInt(studentId), parseInt(subjectId));
       
-      // Grade calculation logic
       let grade = 'F';
-      let gradeValue = 0;
-      
-      if (averageScore >= 90) {
-        grade = 'A';
-        gradeValue = 4.0;
-      } else if (averageScore >= 80) {
-        grade = 'B';
-        gradeValue = 3.0;
-      } else if (averageScore >= 70) {
-        grade = 'C';
-        gradeValue = 2.0;
-      } else if (averageScore >= 60) {
-        grade = 'D';
-        gradeValue = 1.0;
-      } else {
-        grade = 'F';
-        gradeValue = 0.0;
-      }
+      if (averageScore >= 90) grade = 'A';
+      else if (averageScore >= 80) grade = 'B';
+      else if (averageScore >= 70) grade = 'C';
+      else if (averageScore >= 60) grade = 'D';
       
       return {
-        studentId,
-        subjectId,
-        averageScore: Math.round(averageScore * 100) / 100, // Round to 2 decimal places
-        grade,
-        gradeValue
+        studentId: parseInt(studentId),
+        subjectId: parseInt(subjectId),
+        averageScore: Math.round(averageScore * 100) / 100,
+        grade
       };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async batchCreateScores(assessmentId, scores) {
-    try {
-      const results = [];
-      const { Assessment } = require("../src/models");
-      const assessment = await Assessment.findByPk(assessmentId);
-      
-      if (!assessment) {
-        throw new Error('Assessment not found');
-      }
-      
-      for (const scoreData of scores) {
-        // Validate score doesn't exceed max score
-        if (scoreData.score > assessment.maxScore) {
-          throw new Error(`Score cannot exceed maximum score of ${assessment.maxScore}`);
-        }
-        
-        const result = await assessmentScoreRepo.create({
-          assessmentId,
-          studentId: scoreData.studentId,
-          score: scoreData.score,
-          remarks: scoreData.remarks,
-          gradedAt: new Date()
-        });
-        results.push(result);
-
-        try {
-          const student = await authServiceClient.getUserById(scoreData.studentId);
-          await notificationService.notifyStudentAssessmentScored(
-            student.email,
-            assessment.name || assessment.title || `Assessment ${assessmentId}`,
-            scoreData.score,
-            assessment.maxScore
-          );
-        } catch (notifyError) {
-          console.warn('Failed to send assessment score notification in batch create:', notifyError.message);
-        }
-      }
-      
-      return results;
     } catch (error) {
       throw error;
     }
