@@ -22,6 +22,21 @@ export const authService = {
     return response.data;
   },
 
+  forgotPassword: async ({ email }) => {
+    const response = await axios.post(`${AUTH_API_BASE_URL}/auth/forgot-password`, {
+      email,
+    });
+    return response.data;
+  },
+
+  resetPassword: async (token, { newPassword }) => {
+    const response = await axios.post(
+      `${AUTH_API_BASE_URL}/auth/reset-password/${token}`,
+      { newPassword }
+    );
+    return response.data;
+  },
+
   createTeacher: async (teacherData) => {
     const token = localStorage.getItem('access_token');
     const response = await axios.post(`${AUTH_API_BASE_URL}/admin/create-teacher`, teacherData, {
